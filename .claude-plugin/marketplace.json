@@ -1,0 +1,17 @@
+{
+  "name": "gooze",
+  "description": "Claude Code plugins for gooze, the Go mutation testing tool.",
+  "owner": {
+    "name": "gooze-dev",
+    "url": "https://github.com/gooze-dev"
+  },
+  "plugins": [
+    {
+      "name": "gooze",
+      "source": ".",
+      "description": "Mutation testing for Go with gooze: a skill for the run, read, kill-survivors loop, and a post-edit hook that shows gooze diagnostics after every Go edit.",
+      "category": "testing",
+      "tags": ["go", "golang", "mutation-testing", "testing", "gooze"]
+    }
+  ]
+}

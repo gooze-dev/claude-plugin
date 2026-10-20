@@ -1,0 +1,13 @@
+{
+  "name": "gooze",
+  "version": "0.1.0",
+  "description": "Mutation testing for Go with gooze: a skill for the run, read, kill-survivors loop, and a post-edit hook that shows gooze diagnostics (mutation score, surviving mutants, //gooze:ignore and gooze.yaml errors) after every Go edit.",
+  "author": {
+    "name": "gooze-dev",
+    "url": "https://github.com/gooze-dev"
+  },
+  "homepage": "https://gooze.dev/docs",
+  "repository": "https://github.com/gooze-dev/claude-plugin",
+  "license": "MIT",
+  "keywords": ["go", "golang", "mutation-testing", "testing", "gooze", "goozels"]
+}
