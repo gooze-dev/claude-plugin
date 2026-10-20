@@ -23,7 +23,9 @@ so a test is missing or too weak. **Not covered** means no test even runs that l
 4. **Read the results.** `goozels check <file.go>` prints the file's score and one
    line per surviving mutant with the exact change, e.g.
    `calc.go:12:2: warning: gooze: surviving comparison mutant — tests still pass with: if n >= 0 {`.
-   Without goozels, use `gooze report view`.
+   Checking a `_test.go` file also lists the survivors of the source files it
+   tests. With the goozels hook installed, these lines appear by themselves after
+   each edit, including test edits. Without goozels, use `gooze report view`.
 5. **Kill survivors by improving tests**, not by changing production code. For
    each survivor, write a test whose assertion fails under that exact mutation:
    - `<` vs `<=`: test the boundary value itself.

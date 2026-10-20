@@ -11,7 +11,8 @@ mutation testing tool.
 - **Post-edit hook.** After Claude edits a Go file or `gooze.yaml`, it gets that
   file's gooze diagnostics straight away: the mutation score, each surviving
   mutant with the change your tests missed, mistyped `//gooze:ignore` mutagens and
-  `gooze.yaml` errors. This needs [goozels](https://github.com/gooze-dev/goozels);
+  `gooze.yaml` errors. Editing a test file shows the survivors of the source file
+  it tests, which are what the new tests should kill. This needs [goozels](https://github.com/gooze-dev/goozels);
   without it the hook does nothing.
 
 It works alongside the official `gopls-lsp` plugin; keep that on for Go code
