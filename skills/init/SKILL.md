@@ -84,6 +84,11 @@ then create it with just `{"permissions": {"allow": [...]}}`. Mention
 `.claude/settings.local.json` if the user wants the rules only for themselves
 (settings.json is usually committed and shared).
 
+Also say: Claude Code applies a project's allow rules only once the folder is
+trusted (the trust dialog in an interactive session). Headless runs in a fresh
+checkout, such as `claude -p "/code-review"` in CI, ignore them, so pass the
+same rules there with `--allowedTools "Bash(gooze run *) Bash(goozels check *)"`.
+
 ## 4. CI
 
 Glob for `Makefile`, `.github/workflows/*.yml`, `.github/workflows/*.yaml`,

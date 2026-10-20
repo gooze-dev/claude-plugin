@@ -56,7 +56,10 @@ Ask in plain words, for example:
 Claude Code's built-in `/code-review` follows your `CLAUDE.md`, so the
 code-review rule that `/gooze:init` adds makes reviews run gooze on the changed
 packages and report surviving mutants as test gaps. Reviews need the gooze
-commands pre-approved, which `/gooze:init` also offers. A plugin can't add a
+commands pre-approved, which `/gooze:init` also offers. Claude Code applies a
+project's allow rules only once you've trusted the folder, so a headless run in
+a fresh checkout (`claude -p "/code-review"` in CI) needs them passed with
+`--allowedTools "Bash(gooze run *) Bash(goozels check *)"` instead. A plugin can't add a
 reviewer to the built-in review, and the managed Code Review service doesn't
 run code, so for pull requests run gooze in CI (`/gooze:ci-setup`) and give the
 reviewer its report.
