@@ -1,5 +1,5 @@
 {
-  "description": "After Claude edits a Go file or gooze.yaml, add goozels' gooze diagnostics (mutation score, surviving mutants, //gooze:ignore and gooze.yaml errors) to its context. Does nothing when goozels is not installed.",
+  "description": "Checks at session start that gooze and goozels are installed (Go projects only), and after Claude edits a Go file or gooze.yaml adds goozels' gooze diagnostics to its context. Silent when there is nothing to report.",
   "hooks": {
     "PostToolUse": [
       {
@@ -8,8 +8,25 @@
           {
             "type": "command",
             "command": "sh",
-            "args": ["-c", "command -v goozels >/dev/null 2>&1 || exit 0; exec goozels hook claude"],
+            "args": [
+              "-c",
+              "case \"$(goozels version </dev/null 2>/dev/null)\" in goozels*) exec goozels hook claude;; esac; exit 0"
+            ],
             "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/session-start.sh"
+            ],
+            "timeout": 10
           }
         ]
       }

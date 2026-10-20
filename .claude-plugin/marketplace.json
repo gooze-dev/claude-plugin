@@ -9,9 +9,15 @@
     {
       "name": "gooze",
       "source": ".",
-      "description": "Mutation testing for Go with gooze: a skill for the run, read, kill-survivors loop, and a post-edit hook that shows gooze diagnostics after every Go edit.",
+      "description": "Mutation testing for Go with gooze: project setup (/gooze:init), the kill-survivors loop, CI setup for existing build files, and gooze results after every Go edit.",
       "category": "testing",
-      "tags": ["go", "golang", "mutation-testing", "testing", "gooze"]
+      "tags": [
+        "go",
+        "golang",
+        "mutation-testing",
+        "testing",
+        "gooze"
+      ]
     }
   ]
 }

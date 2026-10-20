@@ -1,7 +1,7 @@
 {
   "name": "gooze",
-  "version": "0.1.1",
-  "description": "Mutation testing for Go with gooze: a skill for the run, read, kill-survivors loop, and a post-edit hook that shows gooze diagnostics (mutation score, surviving mutants, //gooze:ignore and gooze.yaml errors) after every Go edit.",
+  "version": "0.2.0",
+  "description": "Mutation testing for Go with gooze: /gooze:init sets a project up (gooze.yaml, CLAUDE.md/AGENTS.md guide with a code-review rule), a skill for the run, read, kill-survivors loop, CI setup for existing Makefile/CI files, and a post-edit hook that shows gooze results after every Go edit.",
   "author": {
     "name": "gooze-dev",
     "url": "https://github.com/gooze-dev"

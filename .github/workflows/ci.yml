@@ -1,0 +1,32 @@
+---
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Manifests and hooks are valid JSON
+      run: |
+        for f in .claude-plugin/*.json hooks/*.json; do
+          python3 -m json.tool "$f" >/dev/null || { echo "invalid JSON: $f"; exit 1; }
+        done
+
+    - name: Hook script tests
+      run: sh tests/run.sh
+
+      # Every deliberate break of a hook script must fail a test (see tests/mutate.sh).
+    - name: Hook script mutation check
+      run: sh tests/mutate.sh
+
+    - name: Skills only use real gooze commands
+      run: python3 tests/lint_commands.py
+
+    - name: Claude Code validates the plugin and marketplace
+      run: npx -y @anthropic-ai/claude-code plugin validate .
