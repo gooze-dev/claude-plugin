@@ -37,7 +37,7 @@ saved on its base branch), run, save under the commit SHA.
         with:
           go-version-file: go.mod        # same as the existing test job
       - name: Install gooze
-        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.1.1
+        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.2.0
       - name: Restore gooze reports
         uses: actions/cache/restore@v4
         with:
@@ -86,7 +86,7 @@ the `shard_N/` layout exactly (this is what gooze's own CI does).
         with:
           go-version-file: go.mod
       - name: Install gooze
-        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.1.1
+        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.2.0
       - name: Restore gooze reports
         uses: actions/cache/restore@v4
         with:
@@ -112,7 +112,7 @@ the `shard_N/` layout exactly (this is what gooze's own CI does).
         with:
           go-version-file: go.mod
       - name: Install gooze
-        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.1.1
+        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.2.0
       # Base reports first, so files no shard re-tested keep their cached results.
       - name: Restore gooze reports
         uses: actions/cache/restore@v4
@@ -177,7 +177,7 @@ beyond actions/cache's 7-day eviction. Replace the cache restore/save steps:
 ## Score gate (optional)
 
 gooze has no threshold flag; survivors don't change its exit code. This step
-parses the last line of `gooze report view` (`Mutation score: NN.NN%`) and
+parses the last line of `gooze report view` (`Mutation score: NN.NN% (…)`) and
 fails below `MIN_SCORE`; a missing score also fails. Put it last (after the
 cache save), in the merge job when sharded. Suggest a `MIN_SCORE` a bit below
 the current score, not an aspirational one.
@@ -187,7 +187,7 @@ the current score, not an aspirational one.
         env:
           MIN_SCORE: "60"
         run: |
-          score=$(gooze report view | sed -n 's/^Mutation score: \([0-9.]*\)%$/\1/p' | tail -1)
+          score=$(gooze report view | sed -n 's/^Mutation score: \([0-9.]*\)%.*$/\1/p' | tail -1)
           echo "Mutation score: ${score}% (minimum ${MIN_SCORE}%)"
           awk -v s="$score" -v m="$MIN_SCORE" 'BEGIN { exit !(s != "" && s >= m) }'
 ```

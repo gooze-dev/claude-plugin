@@ -1,6 +1,6 @@
 # gooze reference
 
-Verified against gooze v1.1.1. Full docs: <https://gooze.dev/docs>.
+Verified against gooze v1.2.0. Full docs: <https://gooze.dev/docs>.
 
 ## Mutagens
 

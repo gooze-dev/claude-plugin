@@ -100,6 +100,8 @@ def check(path):
                     continue  # language-server invocation with flags only
             sub, rest = subcommand(known, words)
             where = f"{path.relative_to(ROOT)}: `{tool} {' '.join(words)}`"
+            if sub is None and re.match(r"v?\d", words[0]):
+                continue  # version output such as "gooze v1.2.0 (go1.27.3)"
             if sub is None and looks_like_prose(words):
                 continue  # quoted output such as "gooze results from the last run:"
             if sub is None:

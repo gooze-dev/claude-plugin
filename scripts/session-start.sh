@@ -32,7 +32,7 @@ esac
 
 # An outdated gooze guide in CLAUDE.md or AGENTS.md (written by /gooze:init):
 # its opening marker records the guide version and the gooze version it was
-# written for, e.g. <!-- gooze:begin guide=1 gooze=v1.1.1 -->. Projects without
+# written for, e.g. <!-- gooze:begin guide=1 gooze=v1.2.0 -->. Projects without
 # the guide get no notice.
 semver() { grep -o 'v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*' | head -n 1; }
 marker_field() { sed -n "s/.*<!-- gooze:begin.* $1=\([^ ]*\).*-->.*/\1/p" | head -n 1; }

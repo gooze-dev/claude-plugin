@@ -207,6 +207,22 @@ out=$(printf '%s' "$payload" | env PATH="$BIN/none:$SYS" sh -c "$guard" 2>&1)
 code=$?
 if [ "$code" = 0 ] && [ -z "$out" ]; then pass; else fail "no goozels: guard is silent" "exit=$code out=$out"; fi
 
+# --- CI score gate in the ci-setup skill -----------------------------------------
+# The gate step parses the score line of `gooze report view`. gooze v1.2.0
+# appends a breakdown to it; the documented sed must read both forms.
+
+for f in "$ROOT"/skills/ci-setup/github-actions.md "$ROOT"/skills/ci-setup/gitlab-ci.md; do
+	expr=$(sed -n "s/.*sed -n '\(s\/^Mutation score:[^']*\)'.*/\1/p" "$f" | head -n 1)
+	if [ -z "$expr" ]; then
+		fail "$(basename "$f"): no score gate sed expression found"
+		continue
+	fi
+	for line in "Mutation score: 87.50%" "Mutation score: 87.50% (14 killed, 2 survived)"; do
+		got=$(printf 'Survivors (2):\n%s\n' "$line" | sed -n "$expr" | tail -n 1)
+		if [ "$got" = "87.50" ]; then pass; else fail "$(basename "$f"): gate reads \"$line\" as \"$got\", want 87.50"; fi
+	done
+done
+
 # --- result ------------------------------------------------------------------
 
 printf '%d passed, %d failed\n' "$passes" "$fails"

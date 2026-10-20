@@ -83,16 +83,16 @@ usually small. The cache does not see cross-file test dependencies; a nightly
 ## Install line (all targets)
 
 ```sh
-GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.1.1
+GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.2.0
 ```
 
 - **Pin a version** in CI so a new gooze release can't change results or
   break the pipeline unannounced; bump it deliberately. `@latest` is fine for
   a quick local try. Which version: if `CLAUDE.md` or `AGENTS.md` has a
   `<!-- gooze:begin guide=N gooze=vX.Y.Z -->` marker (written by `/gooze:init`),
-  pin that `vX.Y.Z` so local, CI and the guide agree; otherwise `v1.1.1`, the
-  current release. Snippets in the reference files say `v1.1.1`; substitute.
-- **`GOTOOLCHAIN=auto`**: gooze v1.1.1 needs Go >= 1.27.3 to build. Official
+  pin that `vX.Y.Z` so local, CI and the guide agree; otherwise `v1.2.0`, the
+  current release. Snippets in the reference files say `v1.2.0`; substitute.
+- **`GOTOOLCHAIN=auto`**: gooze v1.2.0 needs Go >= 1.27.3 to build. Official
   `golang:*` images set `GOTOOLCHAIN=local`, so on an older image the plain
   install fails with "requires go >= 1.27.3". With `auto`, Go fetches the newer
   toolchain just to build gooze; the project's tests still run on its own Go.
@@ -104,7 +104,7 @@ GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.1.1
 (0-based, `0 <= INDEX < TOTAL`; writes `.gooze-reports/shard_INDEX/`),
 `--estimate`, `--mutation-timeout SEC` (default 120), `--coverage-profile FILE`,
 `-x REGEX` (repeatable), `-o DIR` (default `.gooze-reports`), `--no-cache`.
-`gooze report view` (prints `Mutation score: NN.NN%` last),
+`gooze report view` (prints `Mutation score: NN.NN% (…)` last; v1.2.0 adds the breakdown in parentheses),
 `gooze report merge` (combines `shard_*`), `gooze report push <ref>` /
 `gooze report pull <ref>` (OCI registry; auth via `GOOZE_REGISTRY_USERNAME` /
 `GOOZE_REGISTRY_PASSWORD` or the Docker credential store; `--plain-http`,

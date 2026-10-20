@@ -17,9 +17,10 @@ edit. Don't commit.
 
 - **Guide version**: the `guide=N` in the first line of [guide.md](guide.md)
   (the source of truth; it also holds the recommended gooze version).
-- **gooze version**: run `gooze version` and take the leading `vX.Y.Z` from the
-  `tool version` line (`v1.1.1-0.2026...+dirty` → `v1.1.1`; tell the user if it
-  is a development build). If gooze isn't installed, use the `gooze=` value in
+- **gooze version**: run `gooze version` and take the first `vX.Y.Z` it prints
+  (`gooze v1.2.0 (go1.27.3)` → `v1.2.0`; older releases print a `tool version`
+  line instead; `v1.2.1-0.2026...+dirty` → `v1.2.1`, and tell the user it is a
+  development build). If gooze isn't installed, use the `gooze=` value in
   guide.md's marker, say so, and suggest
   `go install gooze.dev/pkg/gooze@<that version>`.
 
