@@ -126,7 +126,9 @@ How they behave:
 - When the function is done, run `gooze report merge`. For an unchanged file
   it replaces just those mutants and the file stays complete. For a changed
   file it replaces the file's results and marks them partial, so the next
-  full `gooze run` re-tests the whole file.
+  full `gooze run` re-tests the whole file. Until then `goozels check` starts
+  with `gooze: partly tested (...)` and names that full run; run it before
+  reporting the file's score.
 
 Don't:
 - Report a narrowed score as the package's or project's score. Merge, then
