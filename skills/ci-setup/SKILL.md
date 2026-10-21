@@ -30,9 +30,9 @@ show the exact snippet, and edit only after the user says yes.
   threshold flag: gooze has none, and survivors never change its exit code.
 - **No `--run` or `--mutagens` in CI.** They're for debugging one function or
   mutagen locally, and their scores cover only that selection. For pull
-  requests, `--diff <base>` tests only the changed lines, but only if the
-  pinned gooze is newer than v1.2.0 (check its `gooze run --help`). Keep a
-  full run on the default branch, which is also what pushes a baseline.
+  requests, `--diff <base>` tests only the changed lines, if the pinned
+  gooze's `gooze run --help` lists `--diff`. Keep a full run on the default
+  branch, which is also what pushes a baseline.
 
 ## 1. Detect (Glob, then Read)
 
