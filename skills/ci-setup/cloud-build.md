@@ -144,16 +144,20 @@ user-managed service account also needs `options.logging` (for example
 ## Thresholds (optional)
 
 Flags, exit codes and the `gooze run --help` check:
-[SKILL.md](SKILL.md#thresholds-and-exit-codes). End the `mutation` step's
-script with the gated view:
+[SKILL.md](SKILL.md#thresholds-and-exit-codes). A failed step stops the
+build, so add the gate as the last step, after `push-baseline`; a `main`
+build below the threshold still publishes its baseline:
 
 ```yaml
+  - id: gate
+    name: golang:1.27
+    script: |
+      set -e
+      if [ -n "${_PR_NUMBER:-}" ]; then exit 0; fi   # PRs gate on their diff
       gooze report view --threshold-total 60
 ```
 
-Exit 3 fails the step and stops the build before `push-baseline`, so a
-`main` build below the threshold doesn't publish its baseline. To report
-without failing the build, add `allowExitCodes: [3]` to the step.
+To report without failing the build, add `allowExitCodes: [3]` to the step.
 
 Pull-request builds can score only the changed lines. Cloud Build clones
 shallowly, so fetch the base first:
