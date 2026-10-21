@@ -1,5 +1,13 @@
 # GitHub Actions
 
+## Contents
+
+- Triggers
+- 1. Single job with the incremental cache (recommended start)
+- 2. Sharded (large repos)
+- 3. Baseline in GHCR instead of actions/cache (optional)
+- Score gate (optional)
+
 Add a `mutation` job to an **existing** workflow (usually the one that runs
 `go test`). Don't create a new workflow file. Copy from that workflow: list
 style and indentation, `runs-on`, `actions/checkout` / `actions/setup-go`

@@ -78,6 +78,20 @@ CI runs all of these on every push. Change the hook scripts test-first: add a
 failing case to `tests/run.sh`, then fix the script, then add a mutant to
 `tests/mutate.sh` if a new branch could break unnoticed.
 
+Skill behaviour has evals in `evals/`, one case per directory, run with
+`claude plugin eval` (Claude Code 2.1.269+). They make real model calls on
+your account, so they aren't part of CI; run them when a skill's text
+changes:
+
+```bash
+claude plugin eval . --scaffold --allow-tools Edit Write --max-cost-usd 5
+```
+
+They check that the mutation-testing skill triggers on a test-quality
+question and not on an unrelated one, that it kills a boundary survivor with
+a test without touching production code, and that it labels an equivalent
+mutant instead of inventing a test.
+
 Bump `version` in `.claude-plugin/plugin.json` on every release; users only
 receive changes when it changes. Bump `guide=` in `skills/init/guide.md` when
 the guide text changes, so projects are told to rerun `/gooze:init`.

@@ -1,5 +1,13 @@
 # GitLab CI
 
+## Contents
+
+- Rules
+- 1. Single job with cache (recommended start)
+- 2. Sharded with `parallel:`
+- 3. Baseline in the GitLab container registry (optional)
+- Score gate (optional)
+
 Add a job to the **existing** `.gitlab-ci.yml` (or to the included file that
 holds the Go jobs). Copy its conventions: the `image:` (global or per job; reuse
 its `golang:X` tag), `stages:` (reuse `test`, or add a stage to the list; a job

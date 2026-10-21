@@ -1,5 +1,12 @@
 # Google Cloud Build
 
+## Contents
+
+- Things specific to Cloud Build
+- 1. One step (recommended start)
+- 2. Baseline in Artifact Registry (optional)
+- Score gate (optional)
+
 Add a step (or a few) to the **existing** build config: `cloudbuild.yaml`,
 `cloudbuild.yml`, `cloudbuild.json` or a variant such as `cloudbuild-ci.yaml`
 that the repo's triggers use. If several exist, pick the one that runs
