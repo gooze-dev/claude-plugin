@@ -1,6 +1,6 @@
 ---
 name: mutation-testing
-description: Run gooze mutation testing on Go code and kill surviving mutants by writing better tests. Use when the user asks about mutation testing, gooze, a mutation score, surviving or not-covered mutants, test quality or test gaps in a Go project, //gooze:ignore directives, or gooze.yaml.
+description: Runs gooze mutation testing on Go code and kills surviving mutants by writing better tests, following the project's own testing conventions. Use when the user asks about mutation testing, gooze, a mutation score, surviving or not-covered mutants, test quality or test gaps in a Go project, //gooze:ignore directives, or gooze.yaml.
 allowed-tools: Bash(gooze run *) Bash(gooze report view) Bash(gooze report view *) Bash(gooze report merge) Bash(gooze version) Bash(goozels check *) Bash(go test *) Bash(go tool cover *) Bash(gocyclo *)
 ---
 
@@ -75,22 +75,31 @@ complexity. Check both before a run and tell the user what you find.
      tests; rerun to see their effect.
    - **`no gooze results for X yet`**: gooze hasn't run on it (or found nothing
      to mutate); run the command it prints.
-5. **Kill survivors by improving tests**, not by changing production code. For
-   each survivor, write a test whose assertion fails under that exact mutation:
-   - `<` vs `<=`: test the boundary value itself.
-   - `+` vs `-`, numeric literal `5` → `0`/`1`: assert the exact computed value.
-   - deleted statement: assert the side effect it has (state, return, call).
-   - `&&` vs `||`, negated condition: cover the case where the operands differ.
-   Not-covered mutants need a test that executes the line at all.
+5. **Kill survivors by improving tests**, not by changing production code.
+   First read how this project tests (a testing section in `CLAUDE.md` or
+   `AGENTS.md`, `TESTING*.md`, the neighbouring `_test.go` files) and write
+   the new test the same way. For each survivor, decide first: **gap or
+   equivalent?** Can any input make the mutated line behave differently? If
+   yes, write the test that observes it:
+   - `<` vs `<=`: test the boundary itself, and both sides (`N-1`, `N`, `N+1`).
+   - `+` vs `-`, a literal `5` → `0`/`1`: assert the exact value.
+   - `&&` vs `||`, `!`: a case where exactly one operand is true.
+   - `NoError` alone or `NotNil` on a slice lets mutants survive: assert the
+     value and the length.
+   Not-covered mutants need a test that executes the line at all. The full
+   method, with the case checklist and assertion pitfalls, is in
+   [killing-survivors.md](killing-survivors.md). Label every survivor (gap
+   fixed, or equivalent with a reason); don't chase a 100% score.
 6. **Rerun gooze** on the same package (same flags, without `--no-cache`) and
-   confirm the score went up. A new test doesn't change the score until gooze
-   runs again.
+   confirm the survivor is gone and the score went up. A new test doesn't
+   change the score until gooze runs again.
 
 ## Narrowed runs: one function, some mutagens, a branch's changes
 
-These flags need a gooze release newer than v1.2.0: check that
-`gooze run --help` lists `--run`. If it doesn't, say so and offer the update
-(`go install gooze.dev/pkg/gooze@latest`); don't guess flags.
+Older gooze releases don't have these flags: check that `gooze run --help`
+lists `--run` (and `--diff`, `--mutagens`) before using them. If it doesn't,
+say so and offer the update (`go install gooze.dev/pkg/gooze@latest`); don't
+guess flags.
 
 - **One function**, like `go test -run` but on the code being mutated:
   `gooze run -p $(nproc) --run '^InRange$' ./internal/foo`. The pattern is a
@@ -160,4 +169,5 @@ the colon.
 
 ## Reference
 
-Mutagens, flags, statuses, report files and CI: see [reference.md](reference.md).
+- Writing the test that kills a survivor: [killing-survivors.md](killing-survivors.md).
+- Mutagens, flags, statuses, report files and CI: [reference.md](reference.md).
