@@ -26,8 +26,9 @@ show the exact snippet, and edit only after the user says yes.
 - **Not in pre-commit hooks** (`.pre-commit-config.yaml`, lefthook, husky):
   a run takes minutes (one `go test` per mutant), far too slow for a commit
   hook. Say this if the user asks for it.
-- Use only real gooze commands and flags (listed below). Don't invent a
-  threshold flag: gooze has none, and survivors never change its exit code.
+- Use only real gooze commands and flags (listed below). Gate on a score
+  with the threshold flags ([Thresholds and exit codes](#thresholds-and-exit-codes)),
+  never with a flag or exit code you haven't seen there.
 - **No `--run` or `--mutagens` in CI.** They're for debugging one function or
   mutagen locally, and their scores cover only that selection. For pull
   requests, `--diff <base>` tests only the changed lines, if the pinned
@@ -75,8 +76,8 @@ Suggest the smallest useful change first, then mention the optional upgrades:
    default branch), not on every push to every branch.
 3. Optional: **cache** `.gooze-reports/` so a PR only re-tests changed files.
 4. Optional: **sharding** across parallel jobs for large repos.
-5. Optional: **score gate** (shell check on `gooze report view`, see the CI
-   references) once the team has a baseline score to defend.
+5. Optional: **score gate** (`--threshold-total`, see below) once the team
+   has a baseline score to defend.
 
 Explain the cost honestly: every mutant runs that package's tests, so a full
 `./...` run can take many minutes to hours. Mitigations: scope paths, exclude
@@ -115,9 +116,72 @@ GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.2.0
 `gooze report pull <ref>` (OCI registry; auth via `GOOZE_REGISTRY_USERNAME` /
 `GOOZE_REGISTRY_PASSWORD` or the Docker credential store; `--plain-http`,
 `--insecure`). `gooze config init`, `gooze version`.
+`gooze run`, `gooze report view` and `gooze report merge` take
+`--threshold-total`, `--threshold-average` and `--threshold-file`;
+`gooze run` also takes `--threshold-diff-total`, `--threshold-diff-average`
+and `--threshold-diff-file` (see below).
 
 Suggest adding `.gooze-reports/` and `.gooze.log` to an existing `.gitignore`
 and to an existing `clean` target, if not there.
+
+## Thresholds and exit codes
+
+Older gooze releases have no thresholds: check that the pinned gooze's
+`gooze run --help` lists `--threshold-total` before using them. If it doesn't,
+offer a version bump or the [fallback gate](#fallback-gate-for-older-gooze).
+
+Thresholds are percents (decimals allowed, `0` = off, `0..100`), set as flags,
+in `gooze.yaml` or as env vars:
+
+| Flag | `gooze.yaml` | Env | Fails when |
+|---|---|---|---|
+| `--threshold-total N` | `threshold.total` | `GOOZE_THRESHOLD_TOTAL` | the score of all mutations is below N |
+| `--threshold-average N` | `threshold.average` | `GOOZE_THRESHOLD_AVERAGE` | the mean of the per-file scores is below N |
+| `--threshold-file N` | `threshold.file` | `GOOZE_THRESHOLD_FILE` | any file's score is below N |
+
+- Files with no scored mutations are ignored. Scores compare as printed
+  (2 decimals).
+- **Pull requests with `--diff`**: a `gooze run --diff REF` run checks only
+  `--threshold-diff-total|average|file` (`threshold.diff.*`,
+  `GOOZE_THRESHOLD_DIFF_TOTAL`, ...), scored on the changed lines, e.g.
+  `gooze run --diff origin/main --threshold-diff-total 80 ./...`. Every other
+  run, `report view` and `report merge` use the plain thresholds.
+- **Shards** (`-s I/N`, N > 1) never check thresholds. Put them on
+  `gooze report merge` or the `gooze report view` after it.
+- Below a threshold gooze still writes the reports and prints the score
+  line, then one `Error: ... is below threshold.total 60%` line per breach
+  on stderr, and exits 3.
+- Suggest a value a bit below the current score, not an aspirational one.
+  A threshold in `gooze.yaml` also applies locally and to every gooze step
+  in CI, so the steps after it (cache save, baseline push) need to run on
+  exit 3; each CI reference shows how.
+
+Exit codes (every gooze command):
+
+| Code | Meaning |
+|---|---|
+| 0 | done, every threshold met (or none set) |
+| 1 | unexpected failure (I/O, reports, internal) |
+| 2 | usage or config error (bad flag, value, regex, mutagen; `--run` with `--shard`) |
+| 3 | done, but a score is below a threshold |
+| 4 | git or diff error (`--diff` outside a repo, unknown ref) |
+| 5 | OCI registry error (`gooze report push` / `pull`) |
+| 6 | no reports to view or merge |
+| 130 | interrupted |
+
+### Fallback gate for older gooze
+
+Only when the pinned gooze has no `--threshold-total` and the user won't
+bump it. This parses the last line of `gooze report view`
+(`Mutation score: NN.NN% (…)`) and fails below `MIN_SCORE`; a missing score
+also fails. Run it as the job's last step, in the merge job when sharded
+(Cloud Build: name the variable `_MIN_SCORE` under `substitutions:`).
+
+```sh
+score=$(gooze report view | sed -n 's/^Mutation score: \([0-9.]*\)%.*$/\1/p' | tail -1)
+echo "Mutation score: ${score}% (minimum ${MIN_SCORE}%)"
+awk -v s="$score" -v m="$MIN_SCORE" 'BEGIN { exit !(s != "" && s >= m) }'
+```
 
 ## 4. Apply on approval
 

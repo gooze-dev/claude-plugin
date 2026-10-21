@@ -5,7 +5,7 @@
 - Things specific to Cloud Build
 - 1. One step (recommended start)
 - 2. Baseline in Artifact Registry (optional)
-- Score gate (optional)
+- Thresholds (optional)
 
 Add a step (or a few) to the **existing** build config: `cloudbuild.yaml`,
 `cloudbuild.yml`, `cloudbuild.json` or a variant such as `cloudbuild-ci.yaml`
@@ -141,18 +141,30 @@ Replace `main` with the repo's default branch. If the file already sets
 user-managed service account also needs `options.logging` (for example
 `CLOUD_LOGGING_ONLY`); keep whatever the file has.
 
-## Score gate (optional)
+## Thresholds (optional)
 
-gooze has no threshold flag. Append to the `mutation` step's script, with
-`_MIN_SCORE: "60"` under `substitutions:` (needs `automapSubstitutions`):
+Flags, exit codes and the `gooze run --help` check:
+[SKILL.md](SKILL.md#thresholds-and-exit-codes). End the `mutation` step's
+script with the gated view:
 
 ```yaml
-      score=$(gooze report view | sed -n 's/^Mutation score: \([0-9.]*\)%.*$/\1/p' | tail -1)
-      echo "Mutation score: ${score}% (minimum ${_MIN_SCORE}%)"
-      awk -v s="$score" -v m="$_MIN_SCORE" 'BEGIN { exit !(s != "" && s >= m) }'
+      gooze report view --threshold-total 60
 ```
 
-A failing gate stops the build before `push-baseline`, so a `main` build
-below the minimum doesn't publish its baseline.
+Exit 3 fails the step and stops the build before `push-baseline`, so a
+`main` build below the threshold doesn't publish its baseline. To report
+without failing the build, add `allowExitCodes: [3]` to the step.
+
+Pull-request builds can score only the changed lines. Cloud Build clones
+shallowly, so fetch the base first:
+
+```yaml
+      git fetch --unshallow origin main || git fetch origin main
+      gooze run -p 8 --diff origin/main --threshold-diff-total 80 ./...
+```
+
+Use it when `_PR_NUMBER` is set, and the full run otherwise. `--diff` needs
+a git checkout (exit 4 without one); if the build's `/workspace` has no
+`.git`, keep the full run on PRs too.
 
 Full walkthrough for the user: <https://gooze.dev/docs/ci/cloud-build>.

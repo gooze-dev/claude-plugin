@@ -6,7 +6,7 @@
 - 1. Single job with the incremental cache (recommended start)
 - 2. Sharded (large repos)
 - 3. Baseline in GHCR instead of actions/cache (optional)
-- Score gate (optional)
+- Thresholds (optional)
 
 Add a `mutation` job to an **existing** workflow (usually the one that runs
 `go test`). Don't create a new workflow file. Copy from that workflow: list
@@ -55,6 +55,7 @@ saved on its base branch), run, save under the commit SHA.
       - name: Mutation testing
         run: gooze run -p 4 ${{ github.event_name == 'schedule' && '--no-cache' || '' }} ./...
       - name: Save gooze reports
+        if: ${{ !cancelled() }}         # also when a threshold fails (exit 3)
         uses: actions/cache/save@v4
         with:
           path: .gooze-reports
@@ -68,8 +69,8 @@ Notes:
   `run: gooze run -p 4 ./...`.
 - Scope paths / add `-x` excludes the same way the test job does. If the
   repo has a `mutation` Make target, use `run: make install-gooze mutation`.
-- Save is a separate step before the score/gate step so the cache is kept even
-  when a gate fails.
+- Save is a separate step with `if: ${{ !cancelled() }}`, so the cache is
+  kept even when a threshold fails the run or view step.
 - If gooze's install line already uses Go >= 1.27.3, `GOTOOLCHAIN=auto` can be
   dropped.
 
@@ -139,6 +140,7 @@ the `shard_N/` layout exactly (this is what gooze's own CI does).
           for archive in shard-archives/*.tgz; do tar -xzf "$archive" -C .gooze-reports; done
           gooze report merge
       - name: Save gooze reports
+        if: ${{ !cancelled() }}         # also when a threshold fails (exit 3)
         uses: actions/cache/save@v4
         with:
           path: .gooze-reports
@@ -148,7 +150,8 @@ the `shard_N/` layout exactly (this is what gooze's own CI does).
 ```
 
 Keep the shard count in the matrix and in `-s N/4` in sync. Gate only in the
-merge job: one shard's score covers only its slice.
+merge job: shards don't check thresholds, and one shard's score covers only
+its slice.
 
 ## 3. Baseline in GHCR instead of actions/cache (optional)
 
@@ -182,20 +185,31 @@ beyond actions/cache's 7-day eviction. Replace the cache restore/save steps:
   only pull. Fork PRs get a read-only token, which is fine for pulling a
   public package; a failed pull just means a full run (`|| echo`).
 
-## Score gate (optional)
+## Thresholds (optional)
 
-gooze has no threshold flag; survivors don't change its exit code. This step
-parses the last line of `gooze report view` (`Mutation score: NN.NN% (…)`) and
-fails below `MIN_SCORE`; a missing score also fails. Put it last (after the
-cache save), in the merge job when sharded. Suggest a `MIN_SCORE` a bit below
-the current score, not an aspirational one.
+Flags, exit codes and the `gooze run --help` check:
+[SKILL.md](SKILL.md#thresholds-and-exit-codes). Gate on the last step (after
+the cache save), in the merge job when sharded:
 
 ```yaml
-      - name: Mutation score gate
-        env:
-          MIN_SCORE: "60"
-        run: |
-          score=$(gooze report view | sed -n 's/^Mutation score: \([0-9.]*\)%.*$/\1/p' | tail -1)
-          echo "Mutation score: ${score}% (minimum ${MIN_SCORE}%)"
-          awk -v s="$score" -v m="$MIN_SCORE" 'BEGIN { exit !(s != "" && s >= m) }'
+      - name: Mutation score
+        run: gooze report view --threshold-total 60
 ```
+
+Exit 3 fails the job. If the threshold is in `gooze.yaml` instead, the run
+(or merge) step fails first; the `if: ${{ !cancelled() }}` on the save step
+keeps the cache. To report without failing, wrap it:
+`run: gooze report view --threshold-total 60 || [ $? -eq 3 ]`.
+
+Pull requests, scored on the changed lines only (checkout needs
+`fetch-depth: 0` for the merge base):
+
+```yaml
+      - name: Mutation testing (changed lines)
+        if: github.event_name == 'pull_request'
+        run: gooze run -p 4 --diff "origin/${{ github.base_ref }}" --threshold-diff-total 80 ./...
+```
+
+Give the full run step `if: github.event_name != 'pull_request'`. A `--diff`
+run writes only `.gooze-reports/run/`, so the default branch's full run keeps
+the cache current.
