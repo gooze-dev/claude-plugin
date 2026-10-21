@@ -51,6 +51,12 @@ calc.go:9  comparison  i < n -> i != n           equivalent: i only steps by one
 | `boolean` | `true` → `false` | take the path the literal controls and assert its effect |
 | `logical` | `a && b` → `a \|\| b` | include a case where exactly one operand is true |
 | `unary` | `!ok` → `ok`, `-x` → `x` | cover both sides of the condition, or a non-zero value whose sign matters |
+| `bitwise` | `flags & mask` → `flags \| mask` | use operands whose bits differ, so the two operators give different results (not `0`, not equal values) |
+| `increment` | `n++` → `n--` | assert the counter's value after the step, not only that it changed |
+| `assignment` | `total += x` → `total -= x` or `total = x` | assert the accumulated value over at least two steps, with a non-zero start |
+| `branch` | `if err != nil {` → `if false {`, block removed | take both sides of the condition and assert each side's effect |
+| `statement` | `cache[k] = v` (line removed) | assert the effect of that statement (the value stored, the call made, the message sent) |
+| `loop` | `i < n` → `i <= n`, body or `break` removed | assert the result at the loop's bounds: zero, one and several iterations, and the early exit |
 
 Mutations that need a `not_covered` fix first: no test runs the line, so add
 a test that executes it at all, then check the assertions above.

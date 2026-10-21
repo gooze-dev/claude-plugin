@@ -4,7 +4,11 @@ Verified against gooze v1.2.0. Full docs: <https://gooze.dev/docs>.
 
 ## Mutagens
 
-Names accepted by `//gooze:ignore`:
+Names accepted by `//gooze:ignore` and `--mutagens`. A run uses every
+mutagen but `branch`, `statement` and `loop`, which run only when selected
+with `--mutagens` or `run.mutagens`. Releases before `bitwise`, `increment`
+and `assignment` existed reject those names; `gooze run --help` lists the
+names a release accepts under `--mutagens`.
 
 | Mutagen | What it mutates |
 |---|---|
@@ -14,9 +18,15 @@ Names accepted by `//gooze:ignore`:
 | `comparison` | comparison operators (`<`, `>`, `<=`, `>=`, `==`, `!=`) |
 | `logical` | logical operators (`&&`, `\|\|`) |
 | `unary` | unary operators (`-`, `+`, `!`, `^`) |
-| `branch` | branch and conditional expressions (`if`, `for`, `switch` conditions) |
-| `statement` | deletes statements (assignments, expressions, `defer`, `go`, send) |
-| `loop` | loops (boundary conditions, body removal, `break`/`continue` removal) |
+| `bitwise` | bitwise operators (`&` ↔ `\|`, `^` → `&`, `&^` → `&`, `<<` ↔ `>>`) |
+| `increment` | `x++` ↔ `x--`, not in a `for` loop's post statement |
+| `assignment` | compound assignments (`+=` ↔ `-=`, `*=` ↔ `/=`, `&=` ↔ `\|=`, `<<=` ↔ `>>=`, ...), and `x op= y` → `x = y` |
+| `branch` | off by default: inverts and forces `if`/`for` conditions, removes `if`/`else` blocks and `switch` case bodies |
+| `statement` | off by default: deletes statements (assignments, calls, `defer`, `go`, sends); keeps `:=` declarations |
+| `loop` | off by default: loop boundaries, body removal, `break`/`continue` removal, recursive calls |
+
+`branch`, `statement` and `loop` also make mutants that don't compile
+(status `error`, left out of the score) and a few that time out.
 
 ## Commands
 
