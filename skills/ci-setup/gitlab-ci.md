@@ -6,7 +6,7 @@
 - 1. Single job with cache (recommended start)
 - 2. Sharded with `parallel:`
 - 3. Baseline in the GitLab container registry (optional)
-- Score gate (optional)
+- Thresholds (optional)
 
 Add a job to the **existing** `.gitlab-ci.yml` (or to the included file that
 holds the Go jobs). Copy its conventions: the `image:` (global or per job; reuse
@@ -105,7 +105,8 @@ mutation-merge:
       - .gooze-reports/
 ```
 
-Give both jobs the same `rules:`. Gate only in the merge job.
+Give both jobs the same `rules:`. Gate only in the merge job: shards don't
+check thresholds.
 
 ## 3. Baseline in the GitLab container registry (optional)
 
@@ -133,22 +134,30 @@ Put these variables on the mutation jobs if the global `variables:` would leak
 the token setting into unrelated jobs. The registry must be enabled for the
 project.
 
-## Score gate (optional)
+## Thresholds (optional)
 
-gooze has no threshold flag. Append to the script of the single job (or the
-merge job):
+Flags, exit codes and the `gooze run --help` check:
+[SKILL.md](SKILL.md#thresholds-and-exit-codes). End the single job's (or the
+merge job's) script with the gated view:
 
 ```yaml
-  variables:
-    MIN_SCORE: "60"
   script:
     # ...after gooze run / gooze report merge
-    - |
-      score=$(gooze report view | sed -n 's/^Mutation score: \([0-9.]*\)%.*$/\1/p' | tail -1)
-      echo "Mutation score: ${score}% (minimum ${MIN_SCORE}%)"
-      awk -v s="$score" -v m="$MIN_SCORE" 'BEGIN { exit !(s != "" && s >= m) }'
+    - gooze report view --threshold-total 60
 ```
 
-The cache is saved only when the job succeeds (cache `when:` defaults to
-`on_success`); add `when: always` to the gooze cache entry so a failed gate
-still keeps the reports.
+Exit 3 fails the job. The cache is saved only when the job succeeds (cache
+`when:` defaults to `on_success`); add `when: always` to the gooze cache entry
+so a failed threshold still keeps the reports. To report without blocking the
+pipeline, add `allow_failure: {exit_codes: [3]}` to the job.
+
+Merge requests, scored on the changed lines only (needs the target branch
+fetched; set `GIT_DEPTH: 0` on the job if the pipeline uses shallow clones):
+
+```yaml
+    - git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+    - gooze run -p 4 --diff "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" --threshold-diff-total 80 ./...
+```
+
+Run that in MR pipelines and keep the full run on the default branch, which
+refreshes the cache (a `--diff` run writes only `.gooze-reports/run/`).

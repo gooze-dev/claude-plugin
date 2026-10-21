@@ -273,20 +273,27 @@ code=$?
 if [ "$code" = 0 ] && [ -z "$out" ]; then pass; else fail "no goozels: guard is silent" "exit=$code out=$out"; fi
 
 # --- CI score gate in the ci-setup skill -----------------------------------------
-# The gate step parses the score line of `gooze report view`. gooze v1.2.0
-# appends a breakdown to it; the documented sed must read both forms.
+# The CI guides gate with gooze's threshold flags, on full and --diff runs.
+# The fallback gate for older gooze lives only in SKILL.md and parses the score
+# line of `gooze report view`, with or without the v1.2.0 breakdown.
 
-for f in "$ROOT"/skills/ci-setup/github-actions.md "$ROOT"/skills/ci-setup/gitlab-ci.md; do
-	expr=$(sed -n "s/.*sed -n '\(s\/^Mutation score:[^']*\)'.*/\1/p" "$f" | head -n 1)
-	if [ -z "$expr" ]; then
-		fail "$(basename "$f"): no score gate sed expression found"
-		continue
-	fi
+for f in "$ROOT"/skills/ci-setup/github-actions.md "$ROOT"/skills/ci-setup/gitlab-ci.md "$ROOT"/skills/ci-setup/cloud-build.md; do
+	for flag in "--threshold-total" "--threshold-diff-total"; do
+		if grep -q -- "gooze .*$flag [0-9]" "$f"; then pass; else fail "$(basename "$f"): no gooze command with $flag"; fi
+	done
+	if grep -q "sed -n 's/^Mutation score:" "$f"; then fail "$(basename "$f"): has its own sed score gate; keep the fallback in SKILL.md only"; else pass; fi
+done
+
+gate="$ROOT/skills/ci-setup/SKILL.md"
+expr=$(sed -n "s/.*sed -n '\(s\/^Mutation score:[^']*\)'.*/\1/p" "$gate" | head -n 1)
+if [ -z "$expr" ]; then
+	fail "SKILL.md: no fallback score gate sed expression found"
+else
 	for line in "Mutation score: 87.50%" "Mutation score: 87.50% (14 killed, 2 survived)"; do
 		got=$(printf 'Survivors (2):\n%s\n' "$line" | sed -n "$expr" | tail -n 1)
-		if [ "$got" = "87.50" ]; then pass; else fail "$(basename "$f"): gate reads \"$line\" as \"$got\", want 87.50"; fi
+		if [ "$got" = "87.50" ]; then pass; else fail "SKILL.md: fallback gate reads \"$line\" as \"$got\", want 87.50"; fi
 	done
-done
+fi
 
 # --- result ------------------------------------------------------------------
 

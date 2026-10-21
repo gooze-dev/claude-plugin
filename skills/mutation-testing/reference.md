@@ -60,6 +60,29 @@ Global: `-x, --exclude REGEX` (repeatable), `-o, --output DIR` (default
 Each mutation ends as `killed`, `survived`, `skipped`, `timeout`, `error` or
 `not_covered`. Score = killed ÷ (all mutations except `error`).
 
+## Thresholds and exit codes
+
+`gooze run`, `gooze report view` and `gooze report merge` take
+`--threshold-total`, `--threshold-average` and `--threshold-file` (percent,
+`0` = off; keys `threshold.total|average|file`, env `GOOZE_THRESHOLD_TOTAL`,
+...): the score of all mutations, the mean of per-file scores, and the
+minimum for every file. Files with no scored mutations are ignored. A
+`gooze run --diff REF` run uses `--threshold-diff-total|average|file`
+(`threshold.diff.*`) instead, scored on the changed lines. A shard
+(`-s I/N`, N > 1) checks none; `gooze report merge` does. Older releases lack
+them: check that `gooze run --help` lists `--threshold-total`.
+
+| Exit | Meaning |
+|---|---|
+| 0 | done, every threshold met (or none set) |
+| 1 | unexpected failure (I/O, reports, internal) |
+| 2 | usage or config error |
+| 3 | done, reports written, but a score is below a threshold (`Error: ... is below threshold.X N%` on stderr) |
+| 4 | git or diff error |
+| 5 | OCI registry error (`report push` / `pull`) |
+| 6 | no reports to view or merge |
+| 130 | interrupted |
+
 ## Report files
 
 `.gooze-reports/` holds one YAML file per mutation (named by a hash) plus
@@ -73,7 +96,9 @@ a file holding partial results is re-tested in full by the next full run. `run/`
 `version`, `output`, `no-cache`, `paths.exclude`, `run.parallel`,
 `run.mutation_timeout`, `run.coverage_profile`, `log.filename`, `log.level`,
 `log.verbose`, `log.max_size`, `log.max_backups`, `log.max_age`, `log.compress`,
-`no-update-check`, `run.diff` and `run.mutagens` (`--run` has no key, like
+`no-update-check`, `run.diff`, `run.mutagens`, `threshold.total`,
+`threshold.average`, `threshold.file`, `threshold.diff.total`,
+`threshold.diff.average` and `threshold.diff.file` (`--run` has no key, like
 `go test -run`). Environment variables use the `GOOZE_` prefix (e.g. `GOOZE_LOG_MAX_SIZE`, `GOOZE_RUN_MUTAGENS`).
 
 ## goozels

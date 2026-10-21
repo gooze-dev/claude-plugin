@@ -19,9 +19,11 @@ GLOBAL_FLAGS = {"-x", "--exclude", "-o", "--output", "--no-cache", "-v", "--verb
 
 # subcommand path -> flags it accepts besides the global ones.
 KNOWN = {
-    "run": {"-p", "--parallel", "-s", "--shard", "--estimate", "--mutation-timeout", "--coverage-profile", "--diff", "--run", "--mutagens"},
-    "report view": {"--all"},
-    "report merge": set(),
+    "run": {"-p", "--parallel", "-s", "--shard", "--estimate", "--mutation-timeout", "--coverage-profile", "--diff", "--run", "--mutagens",
+            "--threshold-total", "--threshold-average", "--threshold-file",
+            "--threshold-diff-total", "--threshold-diff-average", "--threshold-diff-file"},
+    "report view": {"--all", "--threshold-total", "--threshold-average", "--threshold-file"},
+    "report merge": {"--threshold-total", "--threshold-average", "--threshold-file"},
     "report push": {"--plain-http", "--insecure"},
     "report pull": {"--plain-http", "--insecure"},
     "report": set(),

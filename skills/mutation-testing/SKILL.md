@@ -94,6 +94,20 @@ complexity. Check both before a run and tell the user what you find.
    confirm the survivor is gone and the score went up. A new test doesn't
    change the score until gooze runs again.
 
+## Exit codes
+
+- **3: a score is below a threshold** (`threshold.*` in `gooze.yaml`, a
+  `--threshold-*` flag or a `GOOZE_THRESHOLD_*` env var). The run finished and
+  wrote its reports; it isn't a crash. Read the `Error: ... is below
+  threshold...` lines on stderr (one per low file for `threshold.file`), kill
+  those survivors, rerun. Don't lower the threshold or add ignores to pass
+  unless the user asks.
+- **2**: the command or config is wrong (flag, value, regex, mutagen name).
+  Fix it; don't retry unchanged.
+- **4** git/diff error (`--diff` without a repo or with an unknown ref),
+  **6** no reports yet (run `gooze run` first), **1** unexpected failure
+  (read the message), **130** interrupted.
+
 ## Narrowed runs: one function, some mutagens, a branch's changes
 
 Older gooze releases don't have these flags: check that `gooze run --help`
