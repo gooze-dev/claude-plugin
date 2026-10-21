@@ -93,7 +93,8 @@ same rules there with `--allowedTools "Bash(gooze run *) Bash(goozels check *)"`
 ## 4. CI
 
 Glob for `Makefile`, `.github/workflows/*.yml`, `.github/workflows/*.yaml`,
-`.gitlab-ci.yml`, `Taskfile.yml`, `justfile`. If any exists, suggest
+`.gitlab-ci.yml`, `cloudbuild*.yaml`, `cloudbuild*.yml`, `cloudbuild.json`,
+`Taskfile.yml`, `justfile`. If any exists without a gooze step, suggest
 `/gooze:ci-setup` to add gooze to them (pinned to the same gooze version as
 the guide marker). If none, skip; don't propose creating CI files.
 

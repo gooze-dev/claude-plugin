@@ -1,6 +1,6 @@
 ---
 name: ci-setup
-description: Set up gooze mutation testing in a Go project's build and CI - recommend adding it to the EXISTING Makefile, GitHub Actions workflows, .gitlab-ci.yml, Taskfile, justfile or other CI config, with a snippet adapted to that file, applied only after the user agrees. Never creates a new CI file or Makefile.
+description: Set up gooze mutation testing in a Go project's build and CI - recommend adding it to the EXISTING Makefile, GitHub Actions workflows, .gitlab-ci.yml, Google Cloud Build cloudbuild.yaml, Taskfile, justfile or other CI config, with a snippet adapted to that file, applied only after the user agrees. Never creates a new CI file or Makefile.
 when_to_use: Use when the user asks to set up mutation testing for a project that has a Makefile or CI config, to add mutation testing or gooze to CI, a pipeline, a workflow, a Makefile or a task runner, to run gooze on pull requests, to shard gooze or cache its reports in CI, to gate on a mutation score, or asks what to do next after a successful local gooze run.
 allowed-tools: Read Glob Grep
 ---
@@ -17,7 +17,7 @@ show the exact snippet, and edit only after the user says yes.
   exists, say so, give the local commands (`gooze run ./...`,
   `gooze report view`), and offer the gooze.dev CI guides as something the user
   can add themselves: <https://gooze.dev/docs/ci/github>,
-  <https://gooze.dev/docs/ci/gitlab>.
+  <https://gooze.dev/docs/ci/gitlab>, <https://gooze.dev/docs/ci/cloud-build>.
 - **No edit without agreement.** First show the file path, where the snippet
   goes, and the snippet, then **end your turn with the question** ("Add this
   to `<file>`?"). Don't call Edit/Write in that turn, even if it's permitted;
@@ -38,6 +38,7 @@ Glob the repo root for:
 | Make | `Makefile`, `GNUmakefile`, `makefile`, `*.mk` | [makefile.md](makefile.md) |
 | GitHub Actions | `.github/workflows/*.yml`, `.github/workflows/*.yaml` | [github-actions.md](github-actions.md) |
 | GitLab CI | `.gitlab-ci.yml`, plus files it `include:`s | [gitlab-ci.md](gitlab-ci.md) |
+| Google Cloud Build | `cloudbuild.yaml`, `cloudbuild.yml`, `cloudbuild.json`, `cloudbuild*.yaml`, `cloudbuild*.yml` | [cloud-build.md](cloud-build.md) |
 | Task runners | `Taskfile.yml`, `Taskfile.yaml`, `taskfile.yml`, `justfile`, `Justfile`, `.justfile`, `magefile.go` | [other.md](other.md) |
 | Other CI | `.circleci/config.yml`, `bitbucket-pipelines.yml`, `azure-pipelines.yml`, `Jenkinsfile`, `.woodpecker.yml`, `.drone.yml` | [other.md](other.md) |
 
