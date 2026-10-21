@@ -26,7 +26,7 @@ Names accepted by `//gooze:ignore`:
 | `gooze run --estimate [paths...]` | list files and mutation counts without running tests |
 | `gooze report view [paths...]` | per-file scores and survivors (v1.2.0+; filter by path, e.g. `./internal/foo/...`) |
 | `gooze report view --all [paths...]` | every mutation with its status and diff |
-| `gooze report merge` | merge sharded reports (`shard_N/`) into one directory |
+| `gooze report merge` | merge sharded reports (`shard_N/`) into one directory; newer than v1.2.0 also folds in a narrowed run (`run/`) |
 | `gooze report push <ref>` / `pull <ref>` | store or fetch reports in an OCI registry (CI baselines) |
 | `gooze config init` | write a default `gooze.yaml` |
 | `gooze version` | print the version |
@@ -42,6 +42,12 @@ There is no `gooze list` or top-level `gooze view`. <!-- lint-ignore: names comm
 | `--estimate` | preview only |
 | `--mutation-timeout SEC` | per-mutation test timeout (default 120) |
 | `--coverage-profile FILE` | Go coverage profile; mutations on uncovered lines become `not_covered` without running tests |
+| `--diff REF` | newer than v1.2.0: only lines changed since the merge base of `REF` and HEAD (needs git) |
+| `--run REGEX` | newer than v1.2.0: only functions matching, as for `go test -run` (`Name`, `Type.Name`); not with `--shard` |
+| `--mutagens LIST` | newer than v1.2.0: only these mutagens, comma-separated |
+
+A run with `--diff`, `--run` or `--mutagens` writes to `<output>/run/` and
+scores only its selection; `gooze report merge` folds it into the main reports.
 
 Global: `-x, --exclude REGEX` (repeatable), `-o, --output DIR` (default
 `.gooze-reports`), `--no-cache` (re-test everything), `-v, --verbose`.
@@ -56,13 +62,18 @@ Each mutation ends as `killed`, `survived`, `skipped`, `timeout`, `error` or
 `.gooze-reports/` holds one YAML file per mutation (named by a hash) plus
 `_index.yaml` with totals. Cached results for a file are invalidated when its
 source or test file changes, a mutagen version changes, or the file is deleted.
+Newer than v1.2.0: reports record the mutation's `line`, and a `scope` when a
+run was narrowed; a file holding partial results is re-tested in full by the
+next full run. `run/` holds the last narrowed run until `gooze report merge`.
 
 ## gooze.yaml keys
 
 `version`, `output`, `no-cache`, `paths.exclude`, `run.parallel`,
 `run.mutation_timeout`, `run.coverage_profile`, `log.filename`, `log.level`,
-`log.verbose`, `log.max_size`, `log.max_backups`, `log.max_age`, `log.compress`.
-Environment variables use the `GOOZE_` prefix (e.g. `GOOZE_LOG_MAX_SIZE`).
+`log.verbose`, `log.max_size`, `log.max_backups`, `log.max_age`, `log.compress`;
+newer than v1.2.0 also `no-update-check`, `run.diff` and `run.mutagens`
+(`--run` has no key, like `go test -run`). Environment variables use the
+`GOOZE_` prefix (e.g. `GOOZE_LOG_MAX_SIZE`, `GOOZE_RUN_MUTAGENS`).
 
 ## goozels
 

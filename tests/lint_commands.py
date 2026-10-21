@@ -19,7 +19,8 @@ GLOBAL_FLAGS = {"-x", "--exclude", "-o", "--output", "--no-cache", "-v", "--verb
 
 # subcommand path -> flags it accepts besides the global ones.
 KNOWN = {
-    "run": {"-p", "--parallel", "-s", "--shard", "--estimate", "--mutation-timeout", "--coverage-profile"},
+    # --diff, --run and --mutagens arrive after v1.2.0; the skills say so.
+    "run": {"-p", "--parallel", "-s", "--shard", "--estimate", "--mutation-timeout", "--coverage-profile", "--diff", "--run", "--mutagens"},
     "report view": {"--all"},
     "report merge": set(),
     "report push": {"--plain-http", "--insecure"},

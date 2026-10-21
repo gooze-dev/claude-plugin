@@ -1,7 +1,7 @@
 ---
 name: mutation-testing
 description: Run gooze mutation testing on Go code and kill surviving mutants by writing better tests. Use when the user asks about mutation testing, gooze, a mutation score, surviving or not-covered mutants, test quality or test gaps in a Go project, //gooze:ignore directives, or gooze.yaml.
-allowed-tools: Bash(gooze run *) Bash(gooze report view) Bash(gooze version) Bash(goozels check *) Bash(go test *) Bash(go tool cover *) Bash(gocyclo *)
+allowed-tools: Bash(gooze run *) Bash(gooze report view) Bash(gooze report view *) Bash(gooze report merge) Bash(gooze version) Bash(goozels check *) Bash(go test *) Bash(go tool cover *) Bash(gocyclo *)
 ---
 
 # Mutation testing with gooze
@@ -56,6 +56,8 @@ complexity. Check both before a run and tell the user what you find.
    by the core count. Reports go to `.gooze-reports/`. Runs are incremental:
    unchanged files are skipped and their earlier results still count in the
    score. `--no-cache` re-tests everything (there is no `--force`).
+   Working on one function, a few mutagens, or a branch's changes? Use a
+   narrowed run (next section) for a faster loop.
 4. **Read the results.** `goozels check <file.go>` prints the file's score, then
    one line per line of code with surviving mutants, showing original → mutated:
    - `calc.go:1:1: warning: gooze: score 87.50% — 14 killed, 2 survived`
@@ -83,6 +85,51 @@ complexity. Check both before a run and tell the user what you find.
 6. **Rerun gooze** on the same package (same flags, without `--no-cache`) and
    confirm the score went up. A new test doesn't change the score until gooze
    runs again.
+
+## Narrowed runs: one function, some mutagens, a branch's changes
+
+These flags need a gooze release newer than v1.2.0: check that
+`gooze run --help` lists `--run`. If it doesn't, say so and offer the update
+(`go install gooze.dev/pkg/gooze@latest`); don't guess flags.
+
+- **One function**, like `go test -run` but on the code being mutated:
+  `gooze run -p $(nproc) --run '^InRange$' ./internal/foo`. The pattern is a
+  regex matched against `Name`, and `Type.Name` for methods. It's unanchored,
+  so write `^Name$` for one function. Closures count as part of their
+  function. Preview with `gooze run --estimate --run '^InRange$' ./internal/foo`.
+- **Some mutagens**: `--mutagens comparison` (comma-separated: arithmetic,
+  boolean, numbers, comparison, logical, unary), e.g. while killing
+  comparison survivors.
+- **A branch's changes**: `gooze run --diff origin/main ./...` mutates only
+  lines changed since the merge base, plus whole files whose tests changed.
+  Needs git and the base ref fetched.
+
+How they behave:
+- A narrowed run writes to `.gooze-reports/run/` (replaced each time) and
+  never changes the main reports. Read it with
+  `gooze report view -o .gooze-reports/run`. `goozels check` and the edit hook
+  show the main reports only, so they don't see a narrowed run until it is
+  merged.
+- Its score covers only the selection, which the score line names, e.g.
+  `(...; 0 cached, 4 tested; functions matching ^InRange$)`.
+- It uses the cache: a file unchanged since the last run is skipped. Editing
+  its test file makes it re-test; `--no-cache` forces it.
+- When the function is done, run `gooze report merge`. For an unchanged file
+  it replaces just those mutants and the file stays complete. For a changed
+  file it replaces the file's results and marks them partial, so the next
+  full `gooze run` re-tests the whole file.
+
+Don't:
+- Report a narrowed score as the package's or project's score. Merge, then
+  `gooze report view` (or run the package) for that.
+- Use `--mutagens` to hide survivors you'd rather not fix. Only equivalent
+  mutants get a `//gooze:ignore`, with a reason.
+- Expect `--run` to make each mutant faster: the package's whole test suite
+  still runs per mutant. It only cuts the number of mutants.
+- Combine `--run` with `--shard` (gooze rejects it), or use `--run` or
+  `--mutagens` in CI.
+- Push a narrowed run as a registry baseline (`gooze report push`). Baselines
+  come from full runs on the default branch.
 
 ## When a mutant can't be killed
 
