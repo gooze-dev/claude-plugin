@@ -67,9 +67,25 @@ mutant "guide compare reversed" "$S" '-lt "$current_guide"' '-gt "$current_guide
 mutant "unversioned guide counts as current" "$S" '"${guide:-0}"' '"${guide:-1}"'
 mutant "gooze version read from stdout only" "$S" '</dev/null 2>&1 | semver' '</dev/null 2>/dev/null | semver'
 mutant "gooze version mismatch inverted" "$S" '"$recorded_gooze" != "$installed_gooze"' '"$recorded_gooze" = "$installed_gooze"'
-mutant "version compare without gooze installed" "$S" '[ -n "$installed_gooze" ] &&' 'true &&'
+mutant "version compare without gooze installed" "$S" '[ -n "$installed_gooze" ] && [ "$recorded_gooze"' 'true && [ "$recorded_gooze"'
 mutant "file name dropped from the notice" "$S" 'The gooze guide in $name is outdated' 'The gooze guide is outdated'
 mutant "install command dropped" "$S" 'fixes="go install gooze.dev/pkg/gooze@latest"' 'fixes=""'
+mutant "newer gooze not reported" "$S" 'notes="${notes:+$notes }gooze $latest_gooze' 'true || notes="${notes:+$notes }gooze $latest_gooze'
+mutant "newer goozels not reported" "$S" 'notes="${notes:+$notes }goozels $latest_goozels' 'true || notes="${notes:+$notes }goozels $latest_goozels'
+mutant "gooze update check without gooze" "$S" 'if [ -n "$installed_gooze" ] && [ -n "$latest_gooze" ]' 'if [ -n "$latest_gooze" ]'
+mutant "goozels update check for any goozels" "$S" 'goozels*)
+	if [ -n "$installed_goozels" ]' '*)
+	if [ -n "$installed_goozels" ]'
+mutant "version compare reversed" "$S" 'exit !(x[i] + 0 < y[i] + 0)' 'exit !(x[i] + 0 > y[i] + 0)'
+mutant "equal versions count as older" "$S" '		exit 1
+	}' '		exit 0
+	}'
+mutant "only the major version compared" "$S" 'for (i = 1; i <= 3; i++)' 'for (i = 1; i <= 1; i++)'
+mutant "patch version ignored" "$S" 'for (i = 1; i <= 3; i++)' 'for (i = 1; i <= 2; i++)'
+mutant "XDG_CACHE_HOME ignored" "$S" 'cache_dir=${XDG_CACHE_HOME:-$HOME/.cache}' 'cache_dir=$HOME/.cache'
+mutant "HOME fallback dropped" "$S" 'cache_dir=${XDG_CACHE_HOME:-$HOME/.cache}' 'cache_dir=${XDG_CACHE_HOME:-/nonexistent}'
+mutant "gooze update command dropped" "$S" 'fixes="${fixes:+$fixes && }go install gooze.dev/pkg/gooze@latest"' 'true'
+mutant "goozels update command dropped" "$S" '		fixes="${fixes:+$fixes && }go install gooze.dev/pkg/goozels/cmd/goozels@latest"' '		true'
 mutant "hook: any goozels runs the hook" "$H" 'in goozels*) exec' 'in *) exec'
 mutant "hook: wrong agent name" "$H" 'exec goozels hook claude' 'exec goozels hook codex'
 mutant "hook: failure exit when skipped" "$H" 'esac; exit 0' 'esac; exit 1'

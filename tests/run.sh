@@ -77,8 +77,17 @@ plugin_root() {
 }
 
 # preflight DIR PATH [PLUGIN_ROOT]: run the SessionStart script; stdout only.
+# The user cache directory is $CACHE (see release_cache), never the real one.
+CACHE=$TMP/cache
 preflight() {
-	(cd "$1" && env PATH="$2" CLAUDE_PLUGIN_ROOT="${3:-$(plugin_root 1)}" sh "$SESSION_START" 2>"$TMP/stderr")
+	(cd "$1" && env PATH="$2" HOME="$TMP/home" XDG_CACHE_HOME="$CACHE" CLAUDE_PLUGIN_ROOT="${3:-$(plugin_root 1)}" sh "$SESSION_START" 2>"$TMP/stderr")
+}
+
+# release_cache TOOL TAG: the latest-release cache gooze or goozels writes;
+# an empty TAG records a failed lookup.
+release_cache() {
+	mkdir -p "$CACHE/$1"
+	printf '{"tag":"%s","checked_at":"2026-10-21T11:16:35.285263919+04:00"}' "$2" >"$CACHE/$1/latest-release.json"
 }
 
 # message JSON: the systemMessage, or "" when the output is not hook JSON.
@@ -141,6 +150,62 @@ expect_message "missing goozels" "$out" "goozels is missing or too old"
 
 out=$(preflight "$P" "$BIN/none:$SYS")
 expect_message "both missing" "$out" "gooze is not installed" "goozels is missing or too old" " && "
+
+# --- SessionStart: newer releases ----------------------------------------------
+# Fake gooze is v1.1.1 and fake goozels v0.2.0.
+
+go_project "$P"
+release_cache gooze v1.2.0
+out=$(preflight "$P" "$OK")
+expect_message "newer gooze" "$out" "gooze v1.2.0 is available (v1.1.1 is installed)" "go install gooze.dev/pkg/gooze@latest"
+expect_lacks "newer gooze only" "$out" "goozels"
+
+for tag in v1.1.1 v1.1.0 v1.0.9 v0.9.0 ""; do
+	release_cache gooze "$tag"
+	expect_silent "gooze cache $tag: up to date" "$(preflight "$P" "$OK")"
+done
+
+for tag in v1.1.2 v1.10.0 v2.0.0; do
+	release_cache gooze "$tag"
+	expect_message "gooze cache $tag: newer" "$(preflight "$P" "$OK")" "gooze $tag is available"
+done
+
+release_cache gooze v1.2.0
+out=$(preflight "$P" "$BIN/goozels-new:$SYS")
+expect_message "newer release but gooze missing" "$out" "gooze is not installed"
+expect_lacks "no update notice without gooze" "$out" "is available"
+
+rm -rf "$CACHE"
+release_cache goozels v0.3.0
+out=$(preflight "$P" "$OK")
+expect_message "newer goozels" "$out" "goozels v0.3.0 is available (v0.2.0 is installed)" "go install gooze.dev/pkg/goozels/cmd/goozels@latest"
+expect_lacks "newer goozels only" "$out" "gooze v"
+
+release_cache goozels v0.2.0
+expect_silent "goozels up to date" "$(preflight "$P" "$OK")"
+
+# Old goozels answers "version" with gopls's version (v0.20.0); a newer cached
+# goozels release must not be compared against it.
+release_cache goozels v1.0.0
+out=$(preflight "$P" "$BIN/gooze:$BIN/goozels-old:$SYS")
+expect_message "newer release but goozels too old to report its version" "$out" "goozels is missing or too old"
+expect_lacks "no goozels update notice for an old goozels" "$out" "is available"
+
+release_cache goozels v0.3.0
+release_cache gooze v1.2.0
+out=$(preflight "$P" "$OK")
+expect_message "both newer" "$out" "gooze v1.2.0 is available" "goozels v0.3.0 is available" "gooze@latest && go install gooze.dev/pkg/goozels"
+
+# Without XDG_CACHE_HOME, Go's cache directory on Linux is $HOME/.cache.
+if [ "$(uname)" != Darwin ]; then
+	rm -rf "$CACHE"
+	mkdir -p "$TMP/home/.cache/gooze"
+	printf '{"tag":"v1.2.0"}' >"$TMP/home/.cache/gooze/latest-release.json"
+	out=$( (cd "$P" && env -u XDG_CACHE_HOME PATH="$OK" HOME="$TMP/home" CLAUDE_PLUGIN_ROOT="$(plugin_root 1)" sh "$SESSION_START" 2>/dev/null))
+	expect_message "cache under \$HOME/.cache" "$out" "gooze v1.2.0 is available"
+	rm -rf "$TMP/home/.cache"
+fi
+rm -rf "$CACHE"
 
 # --- SessionStart: guide versions ---------------------------------------------
 

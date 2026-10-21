@@ -9,7 +9,7 @@ mutation testing tool.
 | **`/gooze:mutation-testing`** | The gooze loop: scope and run `gooze run` in parallel, read the score and surviving mutants, write tests that kill them, rerun to confirm. Knows when a mutant can't be killed and how to use `//gooze:ignore` narrowly. Claude loads it on its own when you ask about mutation testing. |
 | **`/gooze:ci-setup`** | Recommends adding gooze to the build and CI files the repo **already has** (Makefile, GitHub Actions, GitLab CI, Taskfile, justfile, …), adapted to their conventions, and applies it only after you agree. It never creates a new CI file. |
 | **Post-edit hook** | After Claude edits a Go file or `gooze.yaml`, it gets that file's gooze results: the score, each surviving mutant with the change your tests missed (original → mutated), mistyped `//gooze:ignore` mutagens and `gooze.yaml` errors. Editing a test shows the survivors of the code it tests. It says when results are stale and gives the rerun command. Needs [goozels](https://github.com/gooze-dev/goozels). |
-| **Session check** | In Go projects, tells you once at session start when `gooze` or `goozels` is missing or too old, or when the guide written by `/gooze:init` is outdated, with the fix. Silent otherwise. |
+| **Session check** | In Go projects, tells you once at session start when `gooze` or `goozels` is missing, too old, or behind the latest release, or when the guide written by `/gooze:init` is outdated, with the fix. It reads the latest-release cache that gooze and goozels keep, so it never waits on the network. Silent otherwise. |
 
 It works alongside the official `gopls-lsp` plugin; keep that on for Go code
 intelligence.

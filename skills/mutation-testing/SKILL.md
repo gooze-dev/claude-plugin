@@ -38,6 +38,16 @@ complexity. Check both before a run and tell the user what you find.
 1. **Check the tools.** `gooze version`. If it's missing:
    `go install gooze.dev/pkg/gooze@latest`. For diagnostics after each edit, the
    `goozels` binary is optional: `go install gooze.dev/pkg/goozels/cmd/goozels@latest`.
+   **Keep them up to date.** gooze and goozels print a line like
+   `gooze v1.3.0 is available (you have v1.2.0). Update: go install …@latest`
+   on stderr, and the session check reports the same at startup. When you see
+   one, tell the user and offer that command, but run it only if they agree:
+   it changes their installed tools. After a gooze update, offer `/gooze:init`
+   to refresh the guide, and point out any pinned versions in CI or Makefiles
+   (`gooze@vX.Y.Z`, `GOOZE_VERSION`); those are bumped deliberately, never
+   silently. After an upgrade, the next run re-tests files whose mutagens
+   changed, so scores can move. The notice never blocks or fails a run, so
+   keep going either way.
 2. **Scope the run** to the package being worked on, not `./...`, unless asked:
    `gooze run --estimate ./internal/foo/...` previews files and mutation counts.
 3. **Run in parallel:** `gooze run -p $(nproc) --coverage-profile coverage.out ./internal/foo/...`.
