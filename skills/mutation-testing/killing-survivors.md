@@ -7,6 +7,7 @@ that kills it, or a written reason why no test can.
 
 - Follow the project's conventions first
 - Decide each survivor: gap or equivalent
+- Tests that don't see the mutant
 - What kills each mutant
 - Choosing the cases
 - Assertions that let mutants survive
@@ -32,6 +33,9 @@ code behave differently?**
 - **Equivalent**: no input can, e.g. `i < n` → `i != n` in a loop that only
   steps by one. Say why in one sentence, then ignore it narrowly (see
   `//gooze:ignore` in SKILL.md). Don't write a test that can't exist.
+- **Not seen**: an existing test should already fail on it, but builds the
+  code in a subprocess or reads the `.go` file. See the next section before
+  writing anything.
 
 Never leave a survivor unlabelled. When working through several, keep one line
 each so the user can review the verdicts:
@@ -40,6 +44,58 @@ each so the user can review the verdicts:
 calc.go:5  comparison  if n < lo -> if n <= lo   gap: no test at n == lo  -> TestInRange/accepts_the_lower_bound
 calc.go:9  comparison  i < n -> i != n           equivalent: i only steps by one from 0
 ```
+
+## Tests that don't see the mutant
+
+By default gooze builds each mutant with `go test -overlay` (`run.workspace:
+overlay`): the mutated file is swapped in for that one `go test`, and the
+project's files are never written. It reuses the project's build cache, so it
+runs about 30% faster than testing in a copy, for whole packages and for
+single functions. A test only sees the mutant if the code runs inside the test
+binary. It doesn't when the test:
+
+- builds or runs the project's own code in another process (`go run`,
+  `go build`, or a binary built during the test): that build reads the
+  original file;
+- reads `.go` source files (code generators, doc or lint checks);
+- writes files next to itself, which with `-p` above 1 can also clash between
+  workers testing the same package.
+
+Calling the code directly works, including through mocks and fakes, and so
+does a test that re-runs its own binary (`os.Args[0]`), because that binary
+contains the mutant.
+
+**Confirm it.** If a survivor looks killed by such a test, run the same
+selection with `--workspace deep-copy`, which tests each mutant in a copy of
+the project:
+
+```
+gooze run --workspace deep-copy --run '^Func$' ./pkg
+```
+
+If the mutant is killed there, it's not a gap: don't write a new test. Tell
+the user, and set `run.workspace: deep-copy` in `gooze.yaml` (or suggest the
+test changes below) so the score is right. If it survives there too, it's a
+gap or equivalent as usual.
+
+**Make the tests overlay-friendly to keep the speed.** Suggest these changes,
+in the project's own style, and don't make them unasked:
+
+- CLI tested with `go run` or a built binary: move `main`'s body into
+  `run(args []string, stdout, stderr io.Writer) int`, keep
+  `os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))` in `main`, and test `run`
+  directly with buffers.
+- A real process is needed (exit codes, signals, `os.Exit`): re-run the test
+  binary instead of building one, `exec.Command(os.Args[0],
+  "-test.run=^TestHelperProcess$")` with an env var that tells the helper test
+  to act as the program.
+- Source read from disk: test the function's output, or read fixtures from
+  `testdata/` instead of the package's `.go` files.
+- Files written next to the test: write to `t.TempDir()`, and write golden
+  files only behind an `-update` flag.
+
+Once no test needs a copy, remove `run.workspace: deep-copy` so runs get the
+overlay speed back.
 
 ## What kills each mutant
 
@@ -100,7 +156,7 @@ independent facts, arguments in `(t, want, got)` order, and `NoError`, never
 
 A new test must first pass on the real code (`go test -run 'TestName' ./pkg`),
 then kill the mutant. Don't edit production code to watch it fail: gooze
-applies each mutant to a temporary copy. Re-run gooze on just that function
+builds each mutant without touching the project's files. Re-run gooze on just that function
 (`gooze run --run '^Func$' ./pkg`, if `gooze run --help` lists `--run`, else
 the package) and check the survivor is gone. If it still survives, the test
 doesn't observe the change: revisit the tables above.

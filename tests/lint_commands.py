@@ -19,7 +19,7 @@ GLOBAL_FLAGS = {"-x", "--exclude", "-o", "--output", "--no-cache", "-v", "--verb
 
 # subcommand path -> flags it accepts besides the global ones.
 KNOWN = {
-    "run": {"-p", "--parallel", "-s", "--shard", "--estimate", "--mutation-timeout", "--coverage-profile", "--diff", "--run", "--mutagens",
+    "run": {"-p", "--parallel", "-s", "--shard", "--estimate", "--mutation-timeout", "--coverage-profile", "--diff", "--run", "--mutagens", "--workspace",
             "--threshold-total", "--threshold-average", "--threshold-file",
             "--threshold-diff-total", "--threshold-diff-average", "--threshold-diff-file"},
     "report view": {"--all", "--threshold-total", "--threshold-average", "--threshold-file"},

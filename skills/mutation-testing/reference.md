@@ -55,10 +55,12 @@ There is no `gooze list` or top-level `gooze view`. <!-- lint-ignore: names comm
 | `--diff REF` | only lines changed since the merge base of `REF` and HEAD (needs git) |
 | `--run REGEX` | only functions matching, as for `go test -run` (`Name`, `Type.Name`); not with `--shard` |
 | `--mutagens LIST` | only these mutagens, comma-separated |
+| `--workspace MODE` | how mutants are built: `overlay` (default) or `deep-copy`; see [killing-survivors.md](killing-survivors.md#tests-that-dont-see-the-mutant) |
 
 Older releases lack `--diff`, `--run` and `--mutagens`, and with them the
 `run/` directory, the report `scope` and the `no-update-check`, `run.diff`
-and `run.mutagens` keys: check that `gooze run --help` lists the flags. A run
+and `run.mutagens` keys: check that `gooze run --help` lists the flags. Releases
+without `--workspace` always test in a copy of the project, like `deep-copy`. A run
 with any of them writes to `<output>/run/` and scores only its selection;
 `gooze report merge` folds it into the main reports.
 
@@ -106,7 +108,7 @@ a file holding partial results is re-tested in full by the next full run. `run/`
 `version`, `output`, `no-cache`, `paths.exclude`, `run.parallel`,
 `run.mutation_timeout`, `run.coverage_profile`, `log.filename`, `log.level`,
 `log.verbose`, `log.max_size`, `log.max_backups`, `log.max_age`, `log.compress`,
-`no-update-check`, `run.diff`, `run.mutagens`, `threshold.total`,
+`no-update-check`, `run.diff`, `run.mutagens`, `run.workspace`, `threshold.total`,
 `threshold.average`, `threshold.file`, `threshold.diff.total`,
 `threshold.diff.average` and `threshold.diff.file` (`--run` has no key, like
 `go test -run`). Environment variables use the `GOOZE_` prefix (e.g. `GOOZE_LOG_MAX_SIZE`, `GOOZE_RUN_MUTAGENS`).

@@ -145,6 +145,12 @@ How they behave:
   with `gooze: partly tested (...)` and names that full run; run it before
   reporting the file's score.
 
+A survivor that an existing test should already kill may be invisible to that
+test: gooze builds mutants with `go test -overlay` by default, which a test
+building the code in a subprocess or reading `.go` files doesn't see. Check
+with `--workspace deep-copy` before writing a test; see
+[killing-survivors.md](killing-survivors.md#tests-that-dont-see-the-mutant).
+
 Don't:
 - Report a narrowed score as the package's or project's score. Merge, then
   `gooze report view` (or run the package) for that.
