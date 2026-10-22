@@ -1,7 +1,8 @@
 # Slow runs and timeouts
 
-Read this when a gooze run is slower than expected, mutants end as `timeout`,
-or gooze itself looks like the bottleneck. Measure before changing anything:
+Read this when a gooze run is slower than expected, mutants end as `timeout`
+(often an infinite loop), a run is slow or fails only in CI, or gooze itself
+looks like the bottleneck. Measure before changing anything:
 find out whether the time goes into generating mutants, into running the
 tests, or into one mutant that never finishes.
 
@@ -141,7 +142,25 @@ Exit status 124 means `timeout` stopped it: the mutant never finished, so it
 is an infinite loop. If it finishes, compare its time with the mutation
 timeout and the baseline to see how slow it is.
 
-An example of the infinite-loop case: a token scanner loop
+### Fighting infinite-loop mutants
+
+A mutant that makes a loop spin is a sign the function does too much: the
+loop is buried in it, so no test reaches the edge case where the mutated
+condition never becomes false. Fix the code's shape, in this order, trying
+each through the overlay before suggesting it:
+
+1. **Move the loop into its own small function and test it directly**, with
+   table cases for the edge that made it spin: empty input, the last
+   position, a value at the end of the input.
+2. **Bound the loop** so a mutated condition can't spin, and make the bound
+   itself killable: add a case that needs exactly that many iterations.
+   Otherwise the bound's own `+ 1` or `<` mutants survive as equivalents.
+3. **Replace counter loops over ranges with data.** A loop that fills one
+   map entry per line, `for line := first; line <= last; line++`, has a
+   `line >= last` mutant that never ends when `first == last`. Store the
+   `[first, last]` range instead and look a line up with a small function.
+
+A real case, a token scanner:
 
 ```go
 for {
@@ -153,22 +172,76 @@ for {
 }
 ```
 
-has two mutants, `||` to `&&` and `==` to `<`, under which the package tests
-went from 2 seconds to never finishing within 300. The fixes to try, in the
-overlay, before suggesting one:
+Its `tok < token.EOF` and `||` to `&&` mutants loop forever only when
+`offset` equals the input length, a deletion at the end of the file: EOF's
+offset is then not greater than `offset`, and the mutated test for EOF never
+fires. The package tests went from 2 seconds to never finishing. The fix:
 
-- **Bound the loop**, for example by the input length, since every token is at
-  least one byte: `for range len(src) + 1 { ... }`. Under the mutant the loop
-  then stops and returns a wrong value, which an assertion catches.
-- **Do less work per call** (scan from the start of the node, not the file),
-  so the mutated version is still fast enough for the tests to fail.
-- **Add a test for the edge case the condition guards**, here an offset at
-  the end of the input, so the mutant fails an assertion instead of spinning.
+- extract `tokenAt(src, offset)` and `tokenText(tok, lit)` and test both
+  directly, including `offset == len(src)` and an empty `src`;
+- bound the scan with `for range len(src) + 1`, since every token but one is
+  at least one byte;
+- pin the bound with a case that needs every iteration: `src` `a<b` at offset
+  3 needs 4 tokens, because the scanner inserts a zero-width `;` at the end,
+  so a bound of `len(src)` returns `b` and `len(src) - 1` returns `<`, and
+  both get killed.
 
-Then confirm with gooze itself. gooze builds its own overlay from the files
-on disk, so copy the project to a scratch directory, apply the fix there, run
+**Check each fix the same way you diagnosed it.** With the fix applied (in a
+scratch copy or the overlay), apply the mutant again and run the tests under
+`timeout 60`: exit status 124 means it still hangs, and a fixed loop makes
+the tests **fail** within seconds. Then confirm with gooze itself. gooze
+builds its own overlay from the files on disk, so copy the project to a
+scratch directory, apply the fix there, run
 `gooze run --run '^Func$' ./internal/foo` in the copy, and check the mutant
-now ends as `killed`, not `timeout`. Suggest the fix with that result.
+now ends as `killed`, not `timeout`. Suggest the fix with that result. Never
+raise `run.mutation_timeout` to make an infinite loop pass.
+
+## Slow, timing out or failing only in the pipeline
+
+When mutants time out or survive in CI but not locally, reproduce the CI run
+instead of guessing. The usual causes:
+
+- **Fewer, slower cores.** A GitHub `ubuntu-latest` runner has 4 vCPUs and
+  16 GB. `-p` above the runner's cores, or several gooze jobs sharing one
+  machine, makes tests slow enough to time out: those timeouts aren't real.
+  Keep `-p` at or below the runner's cores, and with shards, `-p` times the
+  shards per machine.
+- **Running as root.** In a `golang` container the job runs as root, so tests
+  that rely on file permissions skip themselves, and the mutants they would
+  kill survive only in CI. Run the job on the runner with
+  `actions/setup-go` instead of in the container.
+- **The diff run covers more than the change.** See
+  [SKILL.md](SKILL.md#narrowed-runs-one-function-some-mutagens-a-branchs-changes):
+  editing a test file pulls its whole source file into `--diff`.
+
+**Reproduce under runner-like limits**, in a fresh clone, not the working
+copy, so local reports and edits don't leak in. Pin the cores with `taskset`
+(Go sizes `GOMAXPROCS` from the CPU affinity) and cap memory with a systemd
+scope, then run exactly the workflow's commands, for example for a PR with
+sharded diff runs:
+
+```
+git clone https://github.com/OWNER/REPO /tmp/ci-repro && cd /tmp/ci-repro && git checkout BRANCH
+for i in 0 1 2 3 4 5; do
+  taskset -c 0-3 systemd-run --user --scope -p MemoryMax=16G gooze run -p 2 -s $i/6 --diff origin/main ./...
+done
+gooze report merge -o .gooze-reports/run
+gooze report view -o .gooze-reports/run --threshold-total 100
+```
+
+`taskset` limits the number of cores, not their speed, so a laptop core is
+still faster than a runner's. A CPU quota needs the cgroup cpu controller,
+which often isn't delegated to users, and Docker runs as root, which brings
+back the permission skips above. Treat a local pass as necessary, not as
+proof; a timeout that appears only under these limits is a slow test (see
+[Slow tests](#slow-tests)), and one that appears without them too is an
+infinite loop.
+
+**Shape the pipeline so pull requests stay fast**: run the shards themselves
+with `--diff` on pull requests (each shard tests its share of the changed
+lines) rather than a separate unsharded diff job next to full shards, and
+keep the full sharded run, with the baseline publish, on the default branch.
+See the ci-setup skill for the workflow.
 
 ## Profiling gooze itself
 

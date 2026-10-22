@@ -14,7 +14,11 @@ style and indentation, `runs-on`, `actions/checkout` / `actions/setup-go`
 versions and their `with:` (`go-version`, `go-version-file`, `cache`), or the
 `container: golang:X` image if it uses one instead of setup-go (then drop the
 setup-go step; `/go/bin` is already on `PATH`). setup-go puts `$(go env GOPATH)/bin`
-on `PATH`, so `gooze` is callable after `go install`.
+on `PATH`, so `gooze` is callable after `go install`. A container job runs as
+root, where tests that rely on file permissions skip themselves and their
+mutants survive only in CI; if the project has such tests, suggest the
+mutation job runs on the runner with setup-go even when other jobs use a
+container.
 
 ## Triggers
 
@@ -213,3 +217,25 @@ Pull requests, scored on the changed lines only (checkout needs
 Give the full run step `if: github.event_name != 'pull_request'`. A `--diff`
 run writes only `.gooze-reports/run/`, so the default branch's full run keeps
 the cache current.
+
+When the repo is sharded, shard the pull request's diff run too, instead of
+adding one unsharded diff job: give each shard's run step `--diff` on pull
+requests (`gooze run -p 2 -s INDEX/TOTAL --diff "origin/${{ github.base_ref }}" ./...`),
+which writes `.gooze-reports/run/shard_INDEX/`. Archive from
+`.gooze-reports/run`, extract there in the merge job, skip the baseline pull
+on pull requests, and gate on the merged changed lines:
+
+```yaml
+      - name: Merge shards
+        run: gooze report merge -o .gooze-reports/run
+      - name: Changed lines must be killed
+        if: github.event_name == 'pull_request'
+        run: gooze report view -o .gooze-reports/run --threshold-total 100
+```
+
+Pass the threshold as a flag there: gooze v1.3.0 doesn't apply
+`threshold.diff.*` from `gooze.yaml` to merged diff shards. Push and pull
+requests then share one matrix: full shards and the baseline publish on the
+default branch, diff shards on pull requests. A shard with no changed lines
+still writes its directory, so the merge and gate pass with
+`100.00% (no mutations)`.

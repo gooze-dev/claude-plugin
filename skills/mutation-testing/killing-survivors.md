@@ -12,6 +12,7 @@ that kills it, or a written reason why no test can.
 - Choosing the cases
 - Assertions that let mutants survive
 - Confirming the kill
+- Equivalent mutants: kill, rewrite, then ignore
 - When the code resists
 
 ## Follow the project's conventions first
@@ -31,8 +32,12 @@ code behave differently?**
 
 - **Gap**: yes. Write the test that makes that difference observable.
 - **Equivalent**: no input can, e.g. `i < n` → `i != n` in a loop that only
-  steps by one. Say why in one sentence, then ignore it narrowly (see
-  `//gooze:ignore` in SKILL.md). Don't write a test that can't exist.
+  steps by one. Say why in one sentence, then follow
+  [Equivalent mutants](#equivalent-mutants-kill-rewrite-then-ignore) before
+  ignoring it. Don't write a test that can't exist.
+- **Timeout**: the mutant made the tests hang, usually an infinite loop. It
+  counts as not killed. Fix the loop's shape, not the timeout: see
+  [troubleshooting-performance.md](troubleshooting-performance.md#fighting-infinite-loop-mutants).
 - **Not seen**: an existing test should already fail on it, but builds the
   code in a subprocess or reads the `.go` file. See the next section before
   writing anything.
@@ -160,6 +165,40 @@ builds each mutant without touching the project's files. Re-run gooze on just th
 (`gooze run --run '^Func$' ./pkg`, if `gooze run --help` lists `--run`, else
 the package) and check the survivor is gone. If it still survives, the test
 doesn't observe the change: revisit the tables above.
+
+## Equivalent mutants: kill, rewrite, then ignore
+
+A mutant that looks equivalent often isn't, and an ignore hides every mutant
+of that mutagen on the line. Work through these in order:
+
+1. **Try to kill it.** Test the boundary it changes, from both sides (see
+   [Choosing the cases](#choosing-the-cases)). Many "equivalent" comparison
+   mutants die at an edge nobody tested: the last element, an empty input,
+   the end of the input.
+2. **Rewrite the code so the mutant isn't generated or becomes
+   observable.** Suggest it, in the project's style, and change production
+   code only if the user agrees:
+   - a loop bound a test can pin down, instead of one whose `<` and `!=`
+     stop at the same place (see
+     [troubleshooting-performance.md](troubleshooting-performance.md#fighting-infinite-loop-mutants));
+   - a guard whose effect a test can see, instead of one that only saves
+     work;
+   - `range` over a slice instead of an index loop, when the index is only
+     used to read the element.
+3. **Only then ignore it, narrowly:** `//gooze:ignore <mutagen>` on that line,
+   with a comment above starting `Equivalent:` that says why no input can
+   tell the difference.
+
+**Code that only saves work** (a cache, a memo, a fast path, an early
+return that skips recomputation) gives the same result either way, so its
+mutants look equivalent: removing the cache still returns the right value.
+Make the saving observable instead: count the calls to the expensive step
+through a wrapping adapter or fake, and assert the counts. For example, a
+cache of parsed files was tested by wrapping the parser and asserting the
+exact parse count after each step: 2 on the first use, 3 after a reuse, 5
+after one file changed. Exact counts, not "fewer than before", are what
+tell a working cache from a disabled or stale one. That kills the
+mutants that disable or break the cache, and needs no ignore.
 
 ## When the code resists
 
