@@ -174,7 +174,9 @@ of that mutagen on the line. Work through these in order:
 1. **Try to kill it.** Test the boundary it changes, from both sides (see
    [Choosing the cases](#choosing-the-cases)). Many "equivalent" comparison
    mutants die at an edge nobody tested: the last element, an empty input,
-   the end of the input.
+   the end of the input. Check the input's shape too: an offset mutant that
+   survived every test died to an operator written without spaces around it
+   (`a<b`), because all the tests had spelled it `a < b`.
 2. **Rewrite the code so the mutant isn't generated or becomes
    observable.** Suggest it, in the project's style, and change production
    code only if the user agrees:
@@ -184,7 +186,14 @@ of that mutagen on the line. Work through these in order:
    - a guard whose effect a test can see, instead of one that only saves
      work;
    - `range` over a slice instead of an index loop, when the index is only
-     used to read the element.
+     used to read the element;
+   - an error instead of a `bool` flag on a failure path whose result is
+     otherwise empty: in `return 0, false`, the `0` mutated to `1` is a
+     value no caller reads, while `return 0, err` gives a test an error
+     to assert;
+   - one helper for a repeated "zero value and `false`" return, so the
+     equivalent mutant exists once, behind a single justified `Equivalent:`
+     marker, instead of on every return.
 3. **Only then ignore it, narrowly:** `//gooze:ignore <mutagen>` on that line,
    with a comment above starting `Equivalent:` that says why no input can
    tell the difference.
