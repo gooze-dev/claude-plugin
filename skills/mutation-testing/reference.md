@@ -94,6 +94,7 @@ v1.3.0 lack them: check that `gooze run --help` lists `--threshold-total`.
 | 4 | git or diff error |
 | 5 | OCI registry error (`report push` / `pull`) |
 | 6 | no reports to view or merge |
+| 7 | a package's tests fail without any mutation; its mutants weren't tested, the rest were scored |
 | 130 | interrupted |
 
 ## Report files
