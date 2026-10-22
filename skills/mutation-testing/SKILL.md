@@ -110,8 +110,8 @@ complexity. Check both before a run and tell the user what you find.
 
 ## Narrowed runs: one function, some mutagens, a branch's changes
 
-Older gooze releases don't have these flags: check that `gooze run --help`
-lists `--run` (and `--diff`, `--mutagens`) before using them. If it doesn't,
+gooze releases before v1.3.0 don't have these flags: check that `gooze run
+--help` lists `--run` (and `--diff`, `--mutagens`) before using them. If it doesn't,
 say so and offer the update (`go install gooze.dev/pkg/gooze@latest`); don't
 guess flags.
 

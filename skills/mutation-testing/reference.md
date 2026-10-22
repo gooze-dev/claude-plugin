@@ -1,13 +1,13 @@
 # gooze reference
 
-Verified against gooze v1.2.0. Full docs: <https://gooze.dev/docs>.
+Verified against gooze v1.3.0. Full docs: <https://gooze.dev/docs>.
 
 ## Mutagens
 
 Names accepted by `//gooze:ignore` and `--mutagens`. A run uses every
 mutagen but `branch`, `statement` and `loop`, which run only when selected
-with `--mutagens` or `run.mutagens`. Releases before `bitwise`, `increment`
-and `assignment` existed reject those names; `gooze run --help` lists the
+with `--mutagens` or `run.mutagens`. Releases before v1.3.0 reject `bitwise`,
+`increment`, `assignment`, `branch`, `statement` and `loop`; `gooze run --help` lists the
 names a release accepts under `--mutagens`.
 
 | Mutagen | What it mutates |
@@ -57,10 +57,11 @@ There is no `gooze list` or top-level `gooze view`. <!-- lint-ignore: names comm
 | `--mutagens LIST` | only these mutagens, comma-separated |
 | `--workspace MODE` | how mutants are built: `overlay` (default) or `deep-copy`; see [killing-survivors.md](killing-survivors.md#tests-that-dont-see-the-mutant) |
 
-Older releases lack `--diff`, `--run` and `--mutagens`, and with them the
-`run/` directory, the report `scope` and the `no-update-check`, `run.diff`
+Releases before v1.3.0 lack `--diff`, `--run` and `--mutagens`, and with them
+the `run/` directory, the report `scope` and the `no-update-check`, `run.diff`
 and `run.mutagens` keys: check that `gooze run --help` lists the flags. Releases
-without `--workspace` always test in a copy of the project, like `deep-copy`. A run
+before v1.3.0 also lack `--workspace` and always test in a copy of the
+project, like `deep-copy`. A run
 with any of them writes to `<output>/run/` and scores only its selection;
 `gooze report merge` folds it into the main reports.
 
@@ -81,8 +82,8 @@ Each mutation ends as `killed`, `survived`, `skipped`, `timeout`, `error` or
 minimum for every file. Files with no scored mutations are ignored. A
 `gooze run --diff REF` run uses `--threshold-diff-total|average|file`
 (`threshold.diff.*`) instead, scored on the changed lines. A shard
-(`-s I/N`, N > 1) checks none; `gooze report merge` does. Older releases lack
-them: check that `gooze run --help` lists `--threshold-total`.
+(`-s I/N`, N > 1) checks none; `gooze report merge` does. Releases before
+v1.3.0 lack them: check that `gooze run --help` lists `--threshold-total`.
 
 | Exit | Meaning |
 |---|---|

@@ -16,7 +16,7 @@ whose stage isn't listed is an error), `tags:`, `before_script:`, `variables:`
 `workflow:rules` / job `rules:` style.
 
 `GOTOOLCHAIN=auto` matters here: official `golang:*` images set
-`GOTOOLCHAIN=local`, and gooze v1.2.0 needs Go >= 1.27.3 to build. If the repo
+`GOTOOLCHAIN=local`, and gooze v1.3.0 needs Go >= 1.27.3 to build. If the repo
 relocates `GOPATH`, `gooze` lands in `$GOPATH/bin`; call it by that path (or
 add it to `PATH`) unless that dir is already on `PATH`.
 
@@ -50,7 +50,7 @@ mutation:
       paths:
         - .gooze-reports/
   script:
-    - GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.2.0
+    - GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.3.0
     - gooze run -p 4 ./...
     - gooze report view
   artifacts:
@@ -82,7 +82,7 @@ mutation:
       paths: [.gooze-reports/]
       policy: pull               # shards only read; the merge job writes
   script:
-    - GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.2.0
+    - GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.3.0
     - gooze run -p 2 -s "$((CI_NODE_INDEX - 1))/$CI_NODE_TOTAL" ./...
   artifacts:
     paths:
@@ -96,7 +96,7 @@ mutation-merge:
       fallback_keys: [gooze-$CI_DEFAULT_BRANCH]
       paths: [.gooze-reports/]
   script:
-    - GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.2.0
+    - GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.3.0
     - gooze report merge
     - gooze report view
   artifacts:
