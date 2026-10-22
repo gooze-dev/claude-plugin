@@ -195,4 +195,5 @@ the colon.
 - Writing the test that kills a survivor: [killing-survivors.md](killing-survivors.md).
 - Mutagens, flags, statuses, report files and CI: [reference.md](reference.md).
 - Slow runs, mutants that time out, or gooze itself looking slow (timing,
-  profiling the tests and gooze): [troubleshooting-performance.md](troubleshooting-performance.md).
+  profiling, and trying each fix through `go test -overlay` before suggesting
+  it): [troubleshooting-performance.md](troubleshooting-performance.md).
