@@ -23,7 +23,7 @@ Copy from the file:
 - **JSON configs** take the same keys; write the snippet as JSON.
 
 `GOTOOLCHAIN=auto` matters: official `golang:*` images set
-`GOTOOLCHAIN=local`, and gooze v1.2.0 needs Go >= 1.27.3 to build.
+`GOTOOLCHAIN=local`, and gooze v1.3.0 needs Go >= 1.27.3 to build.
 
 ## Things specific to Cloud Build
 
@@ -57,7 +57,7 @@ steps:
   - id: mutation
     name: golang:1.27              # the image the test step uses
     script: |
-      GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.2.0
+      GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.3.0
       gooze run -p 8 ./...
       gooze report view
 
@@ -68,7 +68,7 @@ options:
 
 If a `mutation` Make target exists, run `make install-gooze mutation` instead.
 For an `args:`-style file:
-`entrypoint: sh`, `args: ['-c', 'GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.2.0 && gooze run -p 8 ./...']`.
+`entrypoint: sh`, `args: ['-c', 'GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.3.0 && gooze run -p 8 ./...']`.
 
 ## 2. Baseline in Artifact Registry (optional)
 
@@ -101,7 +101,7 @@ steps:
     name: golang:1.27
     script: |
       set -e
-      GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.2.0
+      GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.3.0
       export GOOZE_REGISTRY_USERNAME=oauth2accesstoken
       export GOOZE_REGISTRY_PASSWORD="$(cat /registry/token)"
       REPORTS_REF="${_REGION}-docker.pkg.dev/${PROJECT_ID}/gooze/reports:main"

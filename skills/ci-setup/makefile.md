@@ -6,7 +6,7 @@ package variable if it has one (`PKGS`, `PKG_WHITELIST`, ...). gooze accepts
 several paths, so a space-separated package list works as is.
 
 ```make
-GOOZE_VERSION ?= v1.2.0
+GOOZE_VERSION ?= v1.3.0
 MUTATION_PKGS ?= ./...
 # Extra gooze flags, e.g. MUTATION_FLAGS="-x mocks/ -x _gen\.go --mutation-timeout 300"
 MUTATION_FLAGS ?=

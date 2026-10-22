@@ -11,7 +11,7 @@ any shared `vars:` (e.g. a package list):
   install-gooze:
     desc: Install gooze
     cmds:
-      - GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.2.0
+      - GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.3.0
 
   mutation:
     desc: Run gooze mutation testing (task mutation -- ./internal/foo/...)
@@ -24,7 +24,7 @@ any shared `vars:` (e.g. a package list):
 Copy the file's indentation (spaces or tabs, consistently) and recipe style:
 
 ```just
-gooze_version := "v1.2.0"
+gooze_version := "v1.3.0"
 
 install-gooze:
     GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@{{gooze_version}}
@@ -53,7 +53,7 @@ its trigger style (PRs + default branch). The shell steps are the same
 everywhere:
 
 ```sh
-GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.2.0
+GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.3.0
 gooze report pull "$REPORTS_REF" || echo "no baseline yet"   # optional OCI baseline
 gooze run -p 4 ./...
 gooze report view

@@ -1,4 +1,4 @@
-<!-- gooze:begin guide=1 gooze=v1.2.0 -->
+<!-- gooze:begin guide=1 gooze=v1.3.0 -->
 ## Mutation testing (gooze)
 
 This Go project uses [gooze](https://gooze.dev) for mutation testing. Reports live in `.gooze-reports/`.
