@@ -120,9 +120,10 @@ guess flags.
   regex matched against `Name`, and `Type.Name` for methods. It's unanchored,
   so write `^Name$` for one function. Closures count as part of their
   function. Preview with `gooze run --estimate --run '^InRange$' ./internal/foo`.
-- **Some mutagens**: `--mutagens comparison` (comma-separated: arithmetic,
-  boolean, numbers, comparison, logical, unary), e.g. while killing
-  comparison survivors.
+- **Some mutagens**: `--mutagens comparison` (comma-separated names from
+  [reference.md](reference.md#mutagens)), e.g. while killing comparison
+  survivors. It also turns on `branch`, `statement` and `loop`, which a plain
+  run leaves off: `--mutagens branch` finds `if` blocks no test needs.
 - **A branch's changes**: `gooze run --diff origin/main ./...` mutates only
   lines changed since the merge base, plus whole files whose tests changed.
   Needs git and the base ref fetched.
