@@ -128,6 +128,16 @@ guess flags.
   lines changed since the merge base, plus whole files whose tests changed.
   Needs git and the base ref fetched.
 
+  **Editing a test file pulls the whole source file it tests into the diff
+  run**, old survivors included, so a 100% diff gate can fail on code the
+  change never touched. A one-line signature change in a test once pulled 25
+  old survivors of its source file in; changing a widely used interface
+  touched 11 test files and pulled 83 in. Before pushing, list what the diff
+  run will cover: `git diff --name-only origin/main -- '*_test.go'`. Avoid
+  signature changes that force edits to big test files; when one is needed,
+  expect to kill those old survivors, or split the change into its own pull
+  request.
+
 How they behave:
 - A narrowed run writes to `.gooze-reports/run/` (replaced each time) and
   never changes the main reports. Read it with
@@ -170,13 +180,21 @@ vs `i != len` in a loop that only ever increments by one). Don't write a test
 that can't exist. Explain why it is equivalent, then suppress it narrowly:
 
 ```go
+// Equivalent: i only steps by one from 0, so i < n and i != n stop together.
 for i := 0; i < n; i++ { //gooze:ignore comparison
 ```
+
+Before ignoring, try to kill it, then try rewriting the code so the mutant
+isn't generated or becomes observable; the order and examples, including
+caches and fast paths, are in
+[killing-survivors.md](killing-survivors.md#equivalent-mutants-kill-rewrite-then-ignore).
+A mutant that times out is usually an infinite loop, not an equivalent: see
+[troubleshooting-performance.md](troubleshooting-performance.md#fighting-infinite-loop-mutants).
 
 `//gooze:ignore` with names (comma or space separated) skips those mutagens;
 with no names it skips all of them. A directive covers **every** mutant of that
 mutagen on its line, including killable ones, so first kill those with tests,
-and put the reason in a comment on the line above. Ignore only mutants that
+and put the reason in a comment starting `Equivalent:` on the line above. Ignore only mutants that
 cannot change behaviour, never code that is merely hard to test (`main`,
 stdin, real network): leave those as honest survivors. gooze v1.2.0+ no longer
 generates the common equivalents of comparing a string with `""` or a
@@ -194,3 +212,7 @@ the colon.
 
 - Writing the test that kills a survivor: [killing-survivors.md](killing-survivors.md).
 - Mutagens, flags, statuses, report files and CI: [reference.md](reference.md).
+- Slow runs, mutants that time out (infinite loops), runs that are slow or
+  fail only in CI, or gooze itself looking slow (timing, profiling, and trying
+  each fix through `go test -overlay` before suggesting it):
+  [troubleshooting-performance.md](troubleshooting-performance.md).
