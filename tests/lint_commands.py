@@ -22,7 +22,9 @@ KNOWN = {
     "run": {"-p", "--parallel", "-s", "--shard", "--estimate", "--mutation-timeout", "--coverage-profile", "--diff", "--run", "--mutagens", "--workspace",
             "--threshold-total", "--threshold-average", "--threshold-file",
             "--threshold-diff-total", "--threshold-diff-average", "--threshold-diff-file"},
-    "report view": {"--all", "--threshold-total", "--threshold-average", "--threshold-file"},
+    # --format and --threshold-diff-* come after v1.3.0; the skills check `--help` first.
+    "report view": {"--all", "--format", "--threshold-total", "--threshold-average", "--threshold-file",
+                    "--threshold-diff-total", "--threshold-diff-average", "--threshold-diff-file"},
     "report merge": {"--threshold-total", "--threshold-average", "--threshold-file"},
     "report push": {"--plain-http", "--insecure"},
     "report pull": {"--plain-http", "--insecure"},

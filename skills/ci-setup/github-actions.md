@@ -7,6 +7,7 @@
 - 2. Sharded (large repos)
 - 3. Baseline in GHCR instead of actions/cache (optional)
 - Thresholds (optional)
+- Survivors on the pull request and in code scanning (optional)
 
 Add a `mutation` job to an **existing** workflow (usually the one that runs
 `go test`). Don't create a new workflow file. Copy from that workflow: list
@@ -239,3 +240,71 @@ requests then share one matrix: full shards and the baseline publish on the
 default branch, diff shards on pull requests. A shard with no changed lines
 still writes its directory, so the merge and gate pass with
 `100.00% (no mutations)`.
+
+## Survivors on the pull request and in code scanning (optional)
+
+A failed gate says the score dropped, not where. `gooze report view --format github`
+prints a workflow annotation per line with surviving mutants (then the usual
+summary), and GitHub shows it on that line of the PR's changed files.
+`--format sarif` writes a SARIF 2.1.0 log instead of the summary, for GitHub
+code scanning. Use them only if the pinned gooze's `gooze report view --help`
+lists `--format` (newer than v1.3.0); otherwise offer a version bump or skip it.
+Docs: <https://gooze.dev/docs/ci/github#survivors>.
+
+Annotations, in the pull request job. Take the threshold off the run step,
+so the view step always runs, and gate there instead:
+
+```yaml
+      - name: Mutation testing (changed lines)
+        if: github.event_name == 'pull_request'
+        run: gooze run -p 4 --diff "origin/${{ github.base_ref }}" ./...
+      - name: Annotate survivors
+        if: github.event_name == 'pull_request'
+        run: gooze report view -o .gooze-reports/run --format github --threshold-diff-total 80
+```
+
+When the diff run is sharded, put `--format github` on the merged gate
+instead: `gooze report view -o .gooze-reports/run --format github --threshold-total 100`.
+
+- A line with a surviving mutant is a `warning`; a line whose mutants are only
+  not covered, timed out or skipped is a `notice`. Several mutants on one line
+  make one annotation, so GitHub's per-step annotation limit counts lines.
+- Paths are relative to the git repository root, so a module in a
+  subdirectory works when the step runs there (`working-directory:`).
+- Prefer the flag or `GOOZE_REPORT_FORMAT: github` in the job's `env:`. Don't
+  put `report.format: github` in `gooze.yaml`: local `gooze report view` would
+  print annotations too.
+- `--all` can't be combined with `--format github|sarif` (exit 2).
+
+Code scanning, from the default branch's full run (the merge job when
+sharded), so alerts track survivors across commits:
+
+```yaml
+    permissions:
+      contents: read
+      security-events: write   # upload-sarif
+      actions: read            # upload-sarif, private repositories only
+    steps:
+      - uses: actions/checkout@v4
+      # ... install gooze, run (and merge) ...
+      - name: Write SARIF
+        run: gooze report view --format sarif --threshold-total 60 > gooze.sarif
+      - name: Upload to code scanning
+        if: ${{ !cancelled() }}         # also when the gate fails (exit 3)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: gooze.sarif
+          category: gooze
+```
+
+- gooze writes the whole log before it checks thresholds, so `gooze.sarif` is
+  complete even when the step exits 3.
+- One result per line with survivors, under the rule `gooze/survived`,
+  `gooze/not-covered`, `gooze/timeout` or `gooze/skipped` (the first that a
+  mutant on the line has). `partialFingerprints` come from the line's mutation
+  IDs, so an alert stays the same across runs while its mutants do.
+- Job-level `permissions:` replaces the workflow's, so keep what the job
+  already needs (`packages: write` for a GHCR push).
+- Code scanning works on public repositories; private ones need GitHub Code
+  Security or GitHub Advanced Security. Ask before suggesting it on a private
+  repository.

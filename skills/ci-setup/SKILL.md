@@ -78,6 +78,10 @@ Suggest the smallest useful change first, then mention the optional upgrades:
 4. Optional: **sharding** across parallel jobs for large repos.
 5. Optional: **score gate** (`--threshold-total`, see below) once the team
    has a baseline score to defend.
+6. Optional, GitHub Actions only: **survivors on the PR** with
+   `gooze report view --format github` (annotations on the changed lines), or
+   in code scanning with `--format sarif`; see
+   [github-actions.md](github-actions.md#survivors-on-the-pull-request-and-in-code-scanning-optional).
 
 Explain the cost honestly: every mutant runs that package's tests, so a full
 `./...` run can take many minutes to hours. Mitigations: scope paths, exclude
@@ -120,6 +124,10 @@ GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.3.0
 `--threshold-total`, `--threshold-average` and `--threshold-file`;
 `gooze run` also takes `--threshold-diff-total`, `--threshold-diff-average`
 and `--threshold-diff-file` (see below).
+`gooze report view --format text|github|sarif` (config `report.format`, env
+`GOOZE_REPORT_FORMAT`) writes survivors as GitHub annotations before the
+summary, or as a SARIF 2.1.0 log instead of it; only if the pinned gooze's
+`gooze report view --help` lists `--format` (newer than v1.3.0).
 
 Suggest adding `.gooze-reports/` and `.gooze.log` to an existing `.gitignore`
 and to an existing `clean` target, if not there.
