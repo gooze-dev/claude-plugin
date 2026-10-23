@@ -93,6 +93,12 @@ complexity. Check both before a run and tell the user what you find.
 6. **Rerun gooze** on the same package (same flags, without `--no-cache`) and
    confirm the survivor is gone and the score went up. A new test doesn't
    change the score until gooze runs again.
+7. **Verify a reported score before repeating it.** A score from someone
+   else (a subagent, a summary, an earlier run, a CI log of another commit)
+   is a claim, not a result: false "100%" reports have come from runs on an
+   older commit and from counting mutants outside the change. Re-run the gate
+   yourself on the exact commit, and for a `--diff` gate count only the
+   mutants on the changed lines, before you say it passes.
 
 ## Exit codes
 

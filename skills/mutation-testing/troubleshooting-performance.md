@@ -67,7 +67,9 @@ is slow, see [Profiling gooze itself](#profiling-gooze-itself).
 `go test` processes on the same machine share the CPU: the same estimate has
 taken anywhere from 4 to 14 seconds depending on what else was running. Check
 with `pgrep -fa "gooze run"` first, repeat a timing a few times, and prefer a
-CPU profile, which shows where the time goes whatever the load.
+CPU profile, which shows where the time goes whatever the load. If other jobs
+must keep running, move them to other cores (`taskset -a -p -c 8-11 PID`
+for each) and time on the cores left free.
 
 ## Slow tests
 
@@ -229,6 +231,20 @@ gooze report merge -o .gooze-reports/run
 gooze report view -o .gooze-reports/run --threshold-total 100
 ```
 
+**Run it on the exact commit you will push, and push only when the local
+gate passes.** Pushing to find out costs a full CI cycle per try; the local
+run is minutes. Done this way it reproduced a GitHub run exactly: the same
+98.58% score, the same 3 timeouts and the same exit status 3. To test a
+commit that isn't pushed yet, clone the local repository and fetch the base
+branch from the remote, so `--diff` compares against the real base:
+
+```
+git clone /path/to/local/repo /tmp/ci-repro && cd /tmp/ci-repro
+git checkout BRANCH
+git remote add upstream https://github.com/OWNER/REPO && git fetch upstream main
+gooze run -p 2 -s 0/6 --diff upstream/main ./...
+```
+
 `taskset` limits the number of cores, not their speed, so a laptop core is
 still faster than a runner's. A CPU quota needs the cgroup cpu controller,
 which often isn't delegated to users, and Docker runs as root, which brings
@@ -307,6 +323,40 @@ A real reading, from an unreleased change, on gooze's own 70 files:
 | `runtime.gcBgMarkWorker` | ~27% | garbage collection: allocation per mutant |
 | `packageFiles` → `parser.ParseFile` | 18% | the change re-parsed every file of a package for each source file: a bug, fixed by parsing once per package |
 
+The two hotspots that change had, and their fixes, as patterns to look for:
+
+- **Re-parsing a package's files for every source file.** Cache the parsed
+  package per directory, keyed by the files' contents, so a changed file is
+  parsed again and an unchanged package never is.
+- **Rescanning the whole file for every mutant.** Scan from the mutant's own
+  offset (or its node's start), so the cost is the token, not the file.
+
+Together they took generation on gooze from 3.89 to 0.98 seconds.
+
+**Profile before optimizing, and prove the optimization changes nothing.**
+Optimize only what the profile names. Then check that the generated mutants
+are the same: save the `--estimate` table (per-file mutant counts) from the
+old and the new build and diff them, on the project and on a second real
+module:
+
+```
+/tmp/gooze-old run --estimate --no-cache ./... > /tmp/before.txt
+/tmp/gooze-new run --estimate --no-cache ./... > /tmp/after.txt
+diff /tmp/before.txt /tmp/after.txt && echo "same mutants"
+```
+
+Any difference is a behaviour change, not a speed-up.
+
+**Measure what a speed-up buys before paying for it with churn.** A speed-up
+that changes a widely used function signature forces edits to every test file
+that calls it, and each edited test file pulls its whole source file into a
+`--diff` run (see
+[SKILL.md](SKILL.md#narrowed-runs-one-function-some-mutagens-a-branchs-changes)).
+One such change pulled 25 old survivors in for a code path that rarely ran.
+Prefer an optional interface or a new method next to the old one: keeping
+`StreamMutations` as it was and adding `StreamMutationsWith` took the same
+change's gate from 127 survivors to 0.
+
 To check a fix to gooze, build both versions, then profile or time the same
 command with each, several times. Report a gooze performance problem as an
 issue on [gooze-dev/gooze](https://github.com/gooze-dev/gooze/issues) with the
@@ -314,7 +364,16 @@ command, the file and mutant counts from `--estimate`, the top of the
 profile, and the fix if you measured one; don't present an untested idea as
 the fix.
 
-## Tooling gotcha: golangci-lint on Go 1.27
+## Tooling gotchas
+
+**A `pgrep -f` wait loop can wait forever.** A script like
+`while pgrep -f "gooze run" >/dev/null; do sleep 15; done` matches its own
+command line when the pattern appears in it (for example inside `bash -c`),
+so it never ends. Wait on the PIDs you started (`wait PID`), on an exit
+marker the job writes to its log, or match on something only the job's
+command line contains.
+
+### golangci-lint on Go 1.27
 
 gooze's module needs Go 1.27. A `golangci-lint` built with an older Go fails
 with `the Go language version (go1.26) used to build golangci-lint is lower
