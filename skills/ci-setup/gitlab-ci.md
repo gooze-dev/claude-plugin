@@ -7,6 +7,7 @@
 - 2. Sharded with `parallel:`
 - 3. Baseline in the GitLab container registry (optional)
 - Thresholds (optional)
+- Survivors in the merge request (optional)
 
 Add a job to the **existing** `.gitlab-ci.yml` (or to the included file that
 holds the Go jobs). Copy its conventions: the `image:` (global or per job; reuse
@@ -161,3 +162,43 @@ fetched; set `GIT_DEPTH: 0` on the job if the pipeline uses shallow clones):
 
 Run that in MR pipelines and keep the full run on the default branch, which
 refreshes the cache (a `--diff` run writes only `.gooze-reports/run/`).
+
+## Survivors in the merge request (optional)
+
+A failed gate says the score dropped, not where. `gooze report view --format gitlab`
+(the same as `--format codeclimate`) writes a Code Climate JSON report instead
+of the summary, and GitLab reads it as a Code Quality report: the merge
+request's code quality report lists one finding per line with surviving
+mutants, on every tier (Ultimate also marks the lines in the changes view).
+Use it only if the pinned gooze's `gooze report view --help` lists `gitlab`
+under `--format`; otherwise offer a version bump or skip it. Docs:
+<https://gooze.dev/docs/ci/gitlab#survivors>.
+
+In the merge request job, take the threshold off the run line so the view
+line always runs, and gate there:
+
+```yaml
+  script:
+    - git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+    - gooze run -p 4 --diff "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" ./...
+    - gooze report view -o .gooze-reports/run --format gitlab --threshold-diff-total 80 > gl-code-quality-report.json
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+```
+
+- GitLab uploads `artifacts: reports` even when the job fails, and gooze
+  writes the whole report before it checks thresholds, so a failed gate still
+  shows its findings. Merge into an existing `artifacts:` block; don't add a
+  second one.
+- Severity is `major` for a line with a surviving mutant, `minor` when its
+  mutants are only not covered, timed out or skipped. The fingerprint comes
+  from the line's mutation IDs, so GitLab's comparison with the target
+  branch keeps a finding while its mutants stay the same.
+- Paths are relative to the git repository root (or `$CI_PROJECT_DIR`), so a
+  module in a subdirectory works when the job runs gooze there.
+- Prefer the flag, or `GOOZE_REPORT_FORMAT: gitlab` in the job's
+  `variables:`. Don't put `report.format: gitlab` in `gooze.yaml`: local
+  `gooze report view` would print JSON too.
+- When the diff run is sharded, write the report from the merged gate:
+  `gooze report view -o .gooze-reports/run --format gitlab --threshold-total 100 > gl-code-quality-report.json`.
