@@ -180,6 +180,7 @@ Exit codes (every gooze command):
 | 4 | git or diff error (`--diff` outside a repo, unknown ref) |
 | 5 | OCI registry error (`gooze report push` / `pull`) |
 | 6 | no reports to view or merge |
+| 7 | a package's tests fail without any mutation; its mutants weren't tested, the rest were scored |
 | 130 | interrupted |
 
 ### Fallback gate for older gooze

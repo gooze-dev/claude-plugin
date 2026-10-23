@@ -110,6 +110,11 @@ complexity. Check both before a run and tell the user what you find.
   unless the user asks.
 - **2**: the command or config is wrong (flag, value, regex, mutagen name).
   Fix it; don't retry unchanged.
+- **7: a package's tests fail without any mutation.** Its mutants weren't
+  tested (they'd all look killed); the other packages were scored and saved.
+  stderr lists each package with the end of its `go test` output. Make
+  `go test` pass for those packages first (a real failure, a flaky test, a
+  missing service), then rerun. Don't add ignores or excludes to get past it.
 - **4** git/diff error (`--diff` without a repo or with an unknown ref),
   **6** no reports yet (run `gooze run` first), **1** unexpected failure
   (read the message), **130** interrupted.
