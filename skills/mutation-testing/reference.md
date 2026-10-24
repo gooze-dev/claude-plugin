@@ -85,12 +85,30 @@ minimum for every file. Files with no scored mutations are ignored. A
 (`-s I/N`, N > 1) checks none; `gooze report merge` does. Releases before
 v1.3.0 lack them: check that `gooze run --help` lists `--threshold-total`.
 
+`--threshold-max-survivors N` (`threshold.max_survivors`, env
+`GOOZE_THRESHOLD_MAX_SURVIVORS`; a count, `0` = off) fails the same commands
+when more than N mutants survive. Only `survived` counts; a `--diff` run
+counts the survivors on its changed lines. Releases after v1.3.0 have it:
+check that `gooze run --help` lists it.
+
+`gooze run --fail-fast POLICY` (`run.fail_fast`, env `GOOZE_RUN_FAIL_FAST`,
+default `off`) stops before every mutant is tested: `gate` once a threshold
+can no longer be met (untested mutants counted as killed; exit 3 with the
+usual breach lines), `file` skips the rest of a file that can't meet
+`threshold.file`, `first` stops at the first survived mutant (exit 3,
+`Error: stopped at the first surviving mutant, FILE:LINE (fail-fast first)`).
+The results so far are saved; the next run tests only what was left. The
+score line ends with `stopped early by fail-fast POLICY after N of M` or
+`fail-fast file skipped N of M`. For a quick check after an edit,
+`gooze run --fail-fast first --run '^Func$' ./pkg` answers fastest. Releases
+after v1.3.0 have it: check `gooze run --help`.
+
 | Exit | Meaning |
 |---|---|
 | 0 | done, every threshold met (or none set) |
 | 1 | unexpected failure (I/O, reports, internal) |
 | 2 | usage or config error |
-| 3 | done, reports written, but a score is below a threshold (`Error: ... is below threshold.X N%` on stderr) |
+| 3 | done, reports written, but a score is below a threshold (`Error: ... is below threshold.X N%` on stderr) or more mutants survive than `threshold.max_survivors` (`Error: N surviving mutants are above threshold.max_survivors M`) |
 | 4 | git or diff error |
 | 5 | OCI registry error (`report push` / `pull`) |
 | 6 | no reports to view or merge |
@@ -110,8 +128,8 @@ a file holding partial results is re-tested in full by the next full run. `run/`
 `version`, `output`, `no-cache`, `paths.exclude`, `run.parallel`,
 `run.mutation_timeout`, `run.coverage_profile`, `log.filename`, `log.level`,
 `log.verbose`, `log.max_size`, `log.max_backups`, `log.max_age`, `log.compress`,
-`no-update-check`, `run.diff`, `run.mutagens`, `run.workspace`, `threshold.total`,
-`threshold.average`, `threshold.file`, `threshold.diff.total`,
+`no-update-check`, `run.diff`, `run.mutagens`, `run.workspace`, `run.fail_fast`, `threshold.total`,
+`threshold.average`, `threshold.file`, `threshold.max_survivors`, `threshold.diff.total`,
 `threshold.diff.average` and `threshold.diff.file` (`--run` has no key, like
 `go test -run`). Environment variables use the `GOOZE_` prefix (e.g. `GOOZE_LOG_MAX_SIZE`, `GOOZE_RUN_MUTAGENS`).
 
