@@ -6,7 +6,7 @@ package variable if it has one (`PKGS`, `PKG_WHITELIST`, ...). gooze accepts
 several paths, so a space-separated package list works as is.
 
 ```make
-GOOZE_VERSION ?= v1.3.0
+GOOZE_VERSION ?= v1.4.1
 MUTATION_PKGS ?= ./...
 # Extra gooze flags, e.g. MUTATION_FLAGS="-x mocks/ -x _gen\.go --mutation-timeout 300"
 MUTATION_FLAGS ?=
@@ -35,6 +35,9 @@ Adapt:
   (`GOBIN=$(abspath $(bin)) GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@$(GOOZE_VERSION)`),
   call `$(bin)/gooze`, keep `GOOZE_VERSION` with the other `*_VERSION` pins,
   and add `install-gooze` to an existing `install-tools` aggregate.
+- **gooze as a Go tool** (`tool gooze.dev/pkg/gooze` in `go.mod`): drop
+  `GOOZE_VERSION` and `install-gooze`, and call `go tool gooze` in the
+  recipes.
 - **Existing exclusions** in the `test` target (e.g. `grep -v /mocks`): mirror
   them as `-x` regexes (they match file paths), or put them in `gooze.yaml`
   under `paths.exclude` if that file exists.

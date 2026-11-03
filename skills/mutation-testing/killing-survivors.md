@@ -13,6 +13,7 @@ that kills it, or a written reason why no test can.
 - Assertions that let mutants survive
 - Confirming the kill
 - Equivalent mutants: kill, rewrite, then ignore
+- Equivalents gooze skips itself
 - When the code resists
 
 ## Follow the project's conventions first
@@ -26,6 +27,11 @@ naming. A project's written rules win over the defaults below. Don't convert
 existing tests to another style while killing a mutant.
 
 ## Decide each survivor: gap or equivalent
+
+Start from `gooze report view --by-line` (gooze v1.5.0+), which lists the
+survivors once per line: one test usually kills every mutant on a line, e.g.
+the boundary case kills `<=`, `!=` and `>=` of the same comparison at once.
+Still decide each mutant on the line; a line can mix gaps and equivalents.
 
 For every survivor, ask one question first: **can any input make the mutated
 code behave differently?**
@@ -187,13 +193,10 @@ of that mutagen on the line. Work through these in order:
      work;
    - `range` over a slice instead of an index loop, when the index is only
      used to read the element;
-   - an error instead of a `bool` flag on a failure path whose result is
-     otherwise empty: in `return 0, false`, the `0` mutated to `1` is a
-     value no caller reads, while `return 0, err` gives a test an error
-     to assert;
-   - one helper for a repeated "zero value and `false`" return, so the
-     equivalent mutant exists once, behind a single justified `Equivalent:`
-     marker, instead of on every return.
+   - on gooze before v1.4.0, which still mutates the `0` of `return 0,
+     false`: an error instead of the `bool` flag, or one helper for the
+     repeated "zero value and `false`" return, so the equivalent exists
+     once.
 3. **Only then ignore it, narrowly:** `//gooze:ignore <mutagen>` on that line,
    with a comment above starting `Equivalent:` that says why no input can
    tell the difference.
@@ -208,6 +211,28 @@ exact parse count after each step: 2 on the first use, 3 after a reuse, 5
 after one file changed. Exact counts, not "fewer than before", are what
 tell a working cache from a disabled or stale one. That kills the
 mutants that disable or break the cache, and needs no ignore.
+
+## Equivalents gooze skips itself
+
+Newer gooze doesn't generate these, so they never need a test or an ignore.
+On an older gooze, suggest the upgrade before adding ignores for them:
+
+- **v1.2.0+**: comparing a string with `""`, or a `len`/`cap` with `0`.
+- **v1.4.0+**: `<` → `!=` of a counting loop (the counter starts at 0 and
+  steps by one, up to a literal, a `len`/`cap` of a variable never written,
+  or a variable that only grows; or counts down to 0); constant values
+  returned next to a non-nil error or a literal `false` ok; map size hints
+  in `make(map[K]V, n)`; with `mutagen.comparison.enum_bounds: true`,
+  comparisons at an enum type's lowest and highest constant.
+- **v1.5.0+**: comparisons that no value can pass at an integer type's
+  `math.Min*`/`math.Max*` (`v == math.MinInt64` → `<=`), for parameters and
+  vars declared with a predeclared integer type (not `:=`, `byte`, `rune`);
+  `strconv.ParseInt`/`ParseUint` bitSize `64` → `0`, and both bitSize
+  mutants of `strconv.ParseFloat`; the sign of a half rotation,
+  `bits.RotateLeft64(x, -32)`, for `RotateLeft8` to `RotateLeft64` (not
+  `RotateLeft`).
+
+Anything else that looks equivalent goes through the steps above.
 
 ## When the code resists
 

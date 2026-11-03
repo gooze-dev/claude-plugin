@@ -15,7 +15,8 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
-GLOBAL_FLAGS = {"-x", "--exclude", "-o", "--output", "--no-cache", "-v", "--verbose", "--log-output", "-h", "--help"}
+GLOBAL_FLAGS = {"-x", "--exclude", "-o", "--output", "--no-cache", "--no-update-check", "-v", "--verbose", "--log-output", "--log-level",
+                "-h", "--help"}
 
 # subcommand path -> flags it accepts besides the global ones.
 KNOWN = {
@@ -23,19 +24,25 @@ KNOWN = {
             "--threshold-total", "--threshold-average", "--threshold-file",
             "--threshold-diff-total", "--threshold-diff-average", "--threshold-diff-file",
             "--threshold-max-survivors", "--fail-fast"},
-    # --format and --threshold-diff-* come after v1.3.0; the skills check `--help` first.
-    "report view": {"--all", "--format", "--threshold-total", "--threshold-average", "--threshold-file",
+    # --format and --threshold-diff-* come after v1.3.0, --by-line after v1.4.1;
+    # the skills check `--help` first.
+    "report view": {"--all", "--by-line", "--format", "--threshold-total", "--threshold-average", "--threshold-file",
                     "--threshold-diff-total", "--threshold-diff-average", "--threshold-diff-file",
                     "--threshold-max-survivors"},
-    "report merge": {"--threshold-total", "--threshold-average", "--threshold-file", "--threshold-max-survivors"},
+    # merge takes --threshold-diff-* after v1.4.1.
+    "report merge": {"--threshold-total", "--threshold-average", "--threshold-file", "--threshold-max-survivors",
+                     "--threshold-diff-total", "--threshold-diff-average", "--threshold-diff-file"},
     "report push": {"--plain-http", "--insecure"},
     "report pull": {"--plain-http", "--insecure"},
     "report": set(),
     "config init": set(),
+    "config show": set(),
+    "config schema": set(),
     "config": set(),
     "version": set(),
     "help": set(),
     "completion": set(),
+    "": {"--version"},  # gooze with no subcommand: `gooze --version`, after v1.4.1
 }
 
 # goozels subcommands and their flags (Go's flag package accepts -x and --x).
@@ -54,10 +61,11 @@ TOOLS = {"gooze": (KNOWN, GLOBAL_FLAGS), "goozels": (GOOZELS, GOOZELS_FLAGS)}
 BLOCK = re.compile(r"```[a-z]*\n(.*?)```", re.S)
 SPAN = re.compile(r"`([^`\n]+)`")
 # gooze in command position: line start (after YAML "run:", a list dash or a
-# "$ " prompt), after a shell separator, or after exec/env assignments.
+# "$ " prompt), after a shell separator, or after exec/env assignments, with or
+# without "go tool" (gooze installed as a Go tool).
 INVOCATION = re.compile(
     r"(?:^\s*(?:-\s+)?(?:run:\s*|script:\s*|\$\s+)?|[;&|(]\s*|\$\(\s*|\bexec\s+|\b[A-Z_]+=\S*\s+)"
-    r"(goozels|gooze)\b((?:[ \t]+[^\s|;&)`'\"]+)*)"
+    r"(?:go\s+tool\s+)?(goozels|gooze)\b((?:[ \t]+[^\s|;&)`'\"]+)*)"
 )
 COMMENT = re.compile(r"(?:^|\s)(?:#|//).*$")
 PROSE_KEYS = re.compile(r"^\s*(?:-\s+)?(?:name|desc|description):")
@@ -70,6 +78,8 @@ def subcommand(known, words):
         path = " ".join(words[:n])
         if len(words) >= n and path in known:
             return path, words[n:]
+    if words[0].startswith("-") and "" in known:
+        return "", words
     return None, words
 
 
@@ -98,8 +108,8 @@ def check(path):
         for m in INVOCATION.finditer(line):
             tool, words = m.group(1), m.group(2).split()
             known, tool_flags = TOOLS[tool]
-            if not words or words[0].startswith(("<", "$", "{", "[")):
-                continue  # placeholder or prose like "gooze <subcommand>"
+            if not words or words[0].startswith(("<", "$", "{", "[", "...", "…")):
+                continue  # placeholder or prose like "gooze <subcommand>" or "go tool gooze ..."
             if tool == "goozels" and words[0].startswith("-"):
                 words = [w for w in words if w.split("=", 1)[0] not in tool_flags]
                 if not words:

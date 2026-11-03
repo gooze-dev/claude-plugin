@@ -1,7 +1,7 @@
 ---
 name: mutation-testing
 description: Runs gooze mutation testing on Go code and kills surviving mutants by writing better tests, following the project's own testing conventions. Use when the user asks about mutation testing, gooze, a mutation score, surviving or not-covered mutants, test quality or test gaps in a Go project, //gooze:ignore directives, or gooze.yaml.
-allowed-tools: Bash(gooze run *) Bash(gooze report view) Bash(gooze report view *) Bash(gooze report merge) Bash(gooze version) Bash(goozels check *) Bash(go test *) Bash(go tool cover *) Bash(gocyclo *)
+allowed-tools: Bash(gooze run *) Bash(gooze report view) Bash(gooze report view *) Bash(gooze report merge) Bash(gooze version) Bash(gooze --version) Bash(gooze config show) Bash(go tool gooze run *) Bash(go tool gooze report view) Bash(go tool gooze report view *) Bash(go tool gooze report merge) Bash(go tool gooze version) Bash(goozels check *) Bash(go test *) Bash(go tool cover *) Bash(gocyclo *)
 ---
 
 # Mutation testing with gooze
@@ -35,11 +35,15 @@ complexity. Check both before a run and tell the user what you find.
 
 ## The loop
 
-1. **Check the tools.** `gooze version`. If it's missing:
-   `go install gooze.dev/pkg/gooze@latest`. For diagnostics after each edit, the
+1. **Check the tools.** If `go.mod` has a `tool gooze.dev/pkg/gooze` line
+   (or that path in a `tool ( ... )` block), the project pins gooze as a Go
+   tool: run every gooze command below as `go tool gooze ...` (e.g.
+   `go tool gooze version`), and update it with
+   `go get -tool gooze.dev/pkg/gooze@latest`. Otherwise `gooze version`; if
+   it's missing: `go install gooze.dev/pkg/gooze@latest`. For diagnostics after each edit, the
    `goozels` binary is optional: `go install gooze.dev/pkg/goozels/cmd/goozels@latest`.
    **Keep them up to date.** gooze and goozels print a line like
-   `gooze v1.3.0 is available (you have v1.2.0). Update: go install …@latest`
+   `gooze v1.4.1 is available (you have v1.3.0). Update: go install …@latest`
    on stderr, and the session check reports the same at startup. When you see
    one, tell the user and offer that command, but run it only if they agree:
    it changes their installed tools. After a gooze update, offer `/gooze:init`
@@ -67,7 +71,11 @@ complexity. Check both before a run and tell the user what you find.
    Checking a `_test.go` file also lists the survivors of the source files it
    tests. With the goozels hook installed, these lines appear by themselves after
    each edit (`gooze results from the last run:`), including test edits. Without
-   goozels, use `gooze report view [paths]`.
+   goozels, use `gooze report view [paths]`; with gooze v1.5.0+, add
+   `--by-line` to list the survivors once per line, as in
+   `calc.go:7: 2 survived (comparison ×2): return n <= hi -> !=, <`. One test
+   usually kills every mutant on a line, so work through survivors line by
+   line, not mutant by mutant.
    - **`results are from before X changed`**: the file changed since gooze ran,
      so no line markers are shown. Rerun the command it prints before trusting
      any score.
@@ -75,6 +83,9 @@ complexity. Check both before a run and tell the user what you find.
      tests; rerun to see their effect.
    - **`no gooze results for X yet`**: gooze hasn't run on it (or found nothing
      to mutate); run the command it prints.
+   - **`gooze report view` shows no files** but ends with `found shard_0, ...
+     but no merged reports` or `the last --diff or --run reports are not
+     merged` (v1.5.0+): run the command it names.
 5. **Kill survivors by improving tests**, not by changing production code.
    First read how this project tests (a testing section in `CLAUDE.md` or
    `AGENTS.md`, `TESTING*.md`, the neighbouring `_test.go` files) and write
@@ -147,7 +158,9 @@ guess flags.
   run will cover: `git diff --name-only origin/main -- '*_test.go'`. Avoid
   signature changes that force edits to big test files; when one is needed,
   expect to kill those old survivors, or split the change into its own pull
-  request.
+  request. Since gooze v1.5.0 only `x_test.go` pulls in `x.go`; before, a
+  source without its own test file was pulled in by whichever test file of
+  its package sorted first.
 
 How they behave:
 - A narrowed run writes to `.gooze-reports/run/` (replaced each time) and
@@ -207,17 +220,27 @@ with no names it skips all of them. A directive covers **every** mutant of that
 mutagen on its line, including killable ones, so first kill those with tests,
 and put the reason in a comment starting `Equivalent:` on the line above. Ignore only mutants that
 cannot change behaviour, never code that is merely hard to test (`main`,
-stdin, real network): leave those as honest survivors. gooze v1.2.0+ no longer
-generates the common equivalents of comparing a string with `""` or a
-`len`/`cap` with `0`, so don't add ignores for those. Ask before adding ignores
-in bulk.
+stdin, real network): leave those as honest survivors. Ask before adding
+ignores in bulk.
+
+gooze skips many equivalents itself (since v1.4.0 also the loop above, when
+its bound is a literal or the `len` of a variable never written), so don't
+add ignores for those; see
+[killing-survivors.md](killing-survivors.md#equivalents-gooze-skips-itself)
+for the list per release. After a gooze upgrade, an ignore on such a line
+may be redundant.
 
 ## gooze.yaml
 
 gooze reads only `./gooze.yaml`. If it can't parse it, gooze **ignores the whole
 file** and runs on defaults, with only a one-line warning. `goozels check
 gooze.yaml` validates it. A common slip is `key:value` without a space after
-the colon.
+the colon. `gooze config show` (v1.5.0+) prints the value gooze actually uses
+for each key and where it came from (flag, env, `gooze.yaml` or default).
+gooze v1.5.0+ renames `no-cache` and `no-update-check` to `no_cache` and
+`no_update_check` and ignores `version`; it warns about the old names but
+still reads them. Don't rename them for an older gooze, which calls the new
+names unknown.
 
 ## Reference
 

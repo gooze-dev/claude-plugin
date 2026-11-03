@@ -1,6 +1,6 @@
 # gooze reference
 
-Verified against gooze v1.3.0. Full docs: <https://gooze.dev/docs>.
+Verified against gooze v1.4.1 and main (v1.5.0+ features are marked). Full docs: <https://gooze.dev/docs>.
 
 ## Mutagens
 
@@ -36,10 +36,18 @@ names a release accepts under `--mutagens`.
 | `gooze run --estimate [paths...]` | list files and mutation counts without running tests |
 | `gooze report view [paths...]` | per-file scores and survivors (v1.2.0+; filter by path, e.g. `./internal/foo/...`) |
 | `gooze report view --all [paths...]` | every mutation with its status and diff |
+| `gooze report view --by-line [paths...]` | the survivors once per line of a file, changes folded; with `--format github` it groups the summary after the annotations (v1.5.0+; not with `--all`, `--format sarif` or `--format codeclimate`/`gitlab`, exit 2) |
 | `gooze report merge` | merge sharded reports (`shard_N/`) into one directory; also folds in a narrowed run (`run/`) |
 | `gooze report push <ref>` / `pull <ref>` | store or fetch reports in an OCI registry (CI baselines) |
 | `gooze config init` | write a default `gooze.yaml` |
-| `gooze version` | print the version |
+| `gooze config show` | every config key with its effective value, its source (flag, env, `gooze.yaml` or default) and env var (v1.5.0+) |
+| `gooze config schema` | the JSON Schema of `gooze.yaml`, for editors (v1.5.0+) |
+| `gooze version` | print the version (`gooze --version` too, v1.5.0+) |
+
+Installed as a Go tool (`go get -tool gooze.dev/pkg/gooze@v1.4.1`, which
+adds a `tool` line to `go.mod`), every command runs as `go tool gooze ...`
+at the version `go.mod` pins. That raises the module's `go` line to gooze's
+(1.27.3) and adds its dependencies (about 55) as indirect requires.
 
 There is no `gooze list` or top-level `gooze view`. <!-- lint-ignore: names commands that do not exist -->
 
@@ -52,7 +60,7 @@ There is no `gooze list` or top-level `gooze view`. <!-- lint-ignore: names comm
 | `--estimate` | preview only |
 | `--mutation-timeout SEC` | per-mutation test timeout (default 120) |
 | `--coverage-profile FILE` | Go coverage profile; mutations on uncovered lines become `not_covered` without running tests |
-| `--diff REF` | only lines changed since the merge base of `REF` and HEAD (needs git) |
+| `--diff REF` | only lines changed since the merge base of `REF` and HEAD (needs git), plus every line of `x.go` when `x_test.go` changed |
 | `--run REGEX` | only functions matching, as for `go test -run` (`Name`, `Type.Name`); not with `--shard` |
 | `--mutagens LIST` | only these mutagens, comma-separated |
 | `--workspace MODE` | how mutants are built: `overlay` (default) or `deep-copy`; see [killing-survivors.md](killing-survivors.md#tests-that-dont-see-the-mutant) |
@@ -66,12 +74,18 @@ with any of them writes to `<output>/run/` and scores only its selection;
 `gooze report merge` folds it into the main reports.
 
 Global: `-x, --exclude REGEX` (repeatable), `-o, --output DIR` (default
-`.gooze-reports`), `--no-cache` (re-test everything), `-v, --verbose`.
+`.gooze-reports`), `--no-cache` (re-test everything), `--no-update-check`,
+`-v, --verbose`, `--log-output FILE`, `--log-level debug|info|warn|error`
+(v1.5.0+, key `log.level`; `--verbose` overrides it).
 
 ## Statuses and score
 
 Each mutation ends as `killed`, `survived`, `skipped`, `timeout`, `error` or
 `not_covered`. Score = killed ÷ (all mutations except `error`).
+`gooze report view` (v1.5.0+) has `TIMEOUT` and `ERROR` columns and lists
+mutants that did not build under `Build errors (N):`; `gooze run` prints no
+diff for them. A build error is no test gap: it isn't scored, needs no test,
+and the `github`, `sarif` and `codeclimate` formats skip it.
 
 ## Thresholds and exit codes
 
@@ -81,15 +95,18 @@ Each mutation ends as `killed`, `survived`, `skipped`, `timeout`, `error` or
 ...): the score of all mutations, the mean of per-file scores, and the
 minimum for every file. Files with no scored mutations are ignored. A
 `gooze run --diff REF` run uses `--threshold-diff-total|average|file`
-(`threshold.diff.*`) instead, scored on the changed lines. A shard
-(`-s I/N`, N > 1) checks none; `gooze report merge` does. Releases before
+(`threshold.diff.*`) instead, scored on the changed lines, and so does
+`gooze report view -o .gooze-reports/run` of its reports (v1.4.0+; of its
+merged shards v1.4.1+). A shard
+(`-s I/N`, N > 1) checks none; `gooze report merge` does (for `--diff`
+shards, `-o .gooze-reports/run`, the diff ones since v1.5.0). Releases before
 v1.3.0 lack them: check that `gooze run --help` lists `--threshold-total`.
 
 `--threshold-max-survivors N` (`threshold.max_survivors`, env
 `GOOZE_THRESHOLD_MAX_SURVIVORS`; a count, `0` = off) fails the same commands
 when more than N mutants survive. Only `survived` counts; a `--diff` run
-counts the survivors on its changed lines. Releases after v1.3.0 have it:
-check that `gooze run --help` lists it.
+counts the survivors on its changed lines. v1.4.0+: check
+that `gooze run --help` lists it.
 
 `gooze run --fail-fast POLICY` (`run.fail_fast`, env `GOOZE_RUN_FAIL_FAST`,
 default `off`) stops before every mutant is tested: `gate` once a threshold
@@ -100,8 +117,8 @@ usual breach lines), `file` skips the rest of a file that can't meet
 The results so far are saved; the next run tests only what was left. The
 score line ends with `stopped early by fail-fast POLICY after N of M` or
 `fail-fast file skipped N of M`. For a quick check after an edit,
-`gooze run --fail-fast first --run '^Func$' ./pkg` answers fastest. Releases
-after v1.3.0 have it: check `gooze run --help`.
+`gooze run --fail-fast first --run '^Func$' ./pkg` answers fastest. v1.4.0+:
+check `gooze run --help`.
 
 | Exit | Meaning |
 |---|---|
@@ -125,13 +142,30 @@ a file holding partial results is re-tested in full by the next full run. `run/`
 
 ## gooze.yaml keys
 
-`version`, `output`, `no-cache`, `paths.exclude`, `run.parallel`,
-`run.mutation_timeout`, `run.coverage_profile`, `log.filename`, `log.level`,
-`log.verbose`, `log.max_size`, `log.max_backups`, `log.max_age`, `log.compress`,
-`no-update-check`, `run.diff`, `run.mutagens`, `run.workspace`, `run.fail_fast`, `threshold.total`,
-`threshold.average`, `threshold.file`, `threshold.max_survivors`, `threshold.diff.total`,
-`threshold.diff.average` and `threshold.diff.file` (`--run` has no key, like
-`go test -run`). Environment variables use the `GOOZE_` prefix (e.g. `GOOZE_LOG_MAX_SIZE`, `GOOZE_RUN_MUTAGENS`).
+`output`, `no_cache`, `no_update_check`, `paths.exclude`, `run.parallel`,
+`run.mutation_timeout`, `run.coverage_profile`, `run.diff`, `run.mutagens`,
+`run.workspace`, `run.fail_fast`, `run.go_cache`, `run.go_cache_size`,
+`run.go_cache_prewarm`, `mutagen.comparison.enum_bounds`, `threshold.total`,
+`threshold.average`, `threshold.file`, `threshold.max_survivors`,
+`threshold.diff.total`, `threshold.diff.average`, `threshold.diff.file`,
+`report.format`, `log.filename`, `log.level`, `log.verbose`, `log.max_size`,
+`log.max_backups`, `log.max_age` and `log.compress` (`--run` has no key, like
+`go test -run`). Environment variables use the `GOOZE_` prefix (e.g.
+`GOOZE_LOG_MAX_SIZE`, `GOOZE_RUN_MUTAGENS`). `gooze config show` (v1.5.0+)
+lists every key with its effective value, source and env var; `gooze config
+schema` prints the JSON Schema for editors.
+
+- **v1.5.0+**: `no_cache` and `no_update_check` replace `no-cache` and
+  `no-update-check`, which still work with a deprecation warning; older
+  releases call the snake case names unknown. `version` is ignored, with a
+  warning. `run.go_cache: isolated` (default; or `shared`) keeps the builds of
+  mutants out of `GOCACHE` in gooze's own cache, trimmed to
+  `run.go_cache_size` MB; `run.go_cache_prewarm` builds each package's tests
+  in `GOCACHE` first.
+- **v1.4.0+**: `mutagen.comparison.enum_bounds` (off) skips comparison
+  mutants at an enum type's lowest and highest constant; only safe when no
+  value of the type is converted from an arbitrary integer.
+  `report.format` sets `gooze report view --format`.
 
 ## goozels
 
