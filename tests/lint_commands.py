@@ -108,8 +108,8 @@ def check(path):
         for m in INVOCATION.finditer(line):
             tool, words = m.group(1), m.group(2).split()
             known, tool_flags = TOOLS[tool]
-            if not words or words[0].startswith(("<", "$", "{", "[")):
-                continue  # placeholder or prose like "gooze <subcommand>"
+            if not words or words[0].startswith(("<", "$", "{", "[", "...", "…")):
+                continue  # placeholder or prose like "gooze <subcommand>" or "go tool gooze ..."
             if tool == "goozels" and words[0].startswith("-"):
                 words = [w for w in words if w.split("=", 1)[0] not in tool_flags]
                 if not words:

@@ -30,6 +30,11 @@ go install gooze.dev/pkg/gooze@latest                # required (v1.4.1 recommen
 go install gooze.dev/pkg/goozels/cmd/goozels@latest  # for the post-edit hook (v0.2.0+; v0.3.0 knows gooze v1.3.0)
 ```
 
+To pin gooze per project instead, install it as a Go tool:
+`go get -tool gooze.dev/pkg/gooze@v1.4.1`, then run `go tool gooze ...`. The
+skills and the session check notice the `tool` line in `go.mod`. It raises
+the module's `go` line to 1.27.3 and adds gooze's dependencies to `go.mod`.
+
 gooze needs Go 1.27.3 to build. On an older Go, prefix the commands with
 `GOTOOLCHAIN=auto` so Go fetches the toolchain for you; your project keeps its
 own Go version.

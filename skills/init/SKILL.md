@@ -3,7 +3,7 @@ name: init
 description: Set up a Go project for gooze mutation testing, asking before each change - create gooze.yaml, add or update a versioned gooze guide block in CLAUDE.md / AGENTS.md, allow gooze commands in .claude/settings.json, then point to CI setup.
 when_to_use: Run when the user types /gooze:init, or re-runs it to update an outdated gooze guide block.
 disable-model-invocation: true
-allowed-tools: Read Glob Grep Bash(gooze version)
+allowed-tools: Read Glob Grep Bash(gooze version) Bash(go tool gooze version)
 ---
 
 # Set up this project for gooze
@@ -17,6 +17,10 @@ edit. Don't commit.
 
 - **Guide version**: the `guide=N` in the first line of [guide.md](guide.md)
   (the source of truth; it also holds the recommended gooze version).
+- **gooze as a Go tool**: if `go.mod` has a `tool gooze.dev/pkg/gooze` line
+  (or that path in a `tool ( ... )` block), the project runs gooze as
+  `go tool gooze`: use that wherever this skill says `gooze`, and take the
+  version from its `require` line in `go.mod`.
 - **gooze version**: run `gooze version` and take the first `vX.Y.Z` it prints
   (`gooze v1.2.0 (go1.27.3)` → `v1.2.0`; older releases print a `tool version`
   line instead; `v1.2.1-0.2026...+dirty` → `v1.2.1`, and tell the user it is a
@@ -82,6 +86,9 @@ pre-approve commands for the project. Offer to add to `permissions.allow`:
 "Bash(gooze report view*)",
 "Bash(goozels check *)"
 ```
+
+For gooze as a Go tool, offer `"Bash(go tool gooze run *)"` and
+`"Bash(go tool gooze report view*)"` instead of the two gooze rules.
 
 Read `.claude/settings.json` if it exists and merge: keep every existing key
 and rule, add only missing ones, keep it valid JSON. If it doesn't exist, ask,

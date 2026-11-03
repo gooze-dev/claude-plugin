@@ -1,7 +1,7 @@
 ---
 name: mutation-testing
 description: Runs gooze mutation testing on Go code and kills surviving mutants by writing better tests, following the project's own testing conventions. Use when the user asks about mutation testing, gooze, a mutation score, surviving or not-covered mutants, test quality or test gaps in a Go project, //gooze:ignore directives, or gooze.yaml.
-allowed-tools: Bash(gooze run *) Bash(gooze report view) Bash(gooze report view *) Bash(gooze report merge) Bash(gooze version) Bash(gooze --version) Bash(gooze config show) Bash(goozels check *) Bash(go test *) Bash(go tool cover *) Bash(gocyclo *)
+allowed-tools: Bash(gooze run *) Bash(gooze report view) Bash(gooze report view *) Bash(gooze report merge) Bash(gooze version) Bash(gooze --version) Bash(gooze config show) Bash(go tool gooze run *) Bash(go tool gooze report view) Bash(go tool gooze report view *) Bash(go tool gooze report merge) Bash(go tool gooze version) Bash(goozels check *) Bash(go test *) Bash(go tool cover *) Bash(gocyclo *)
 ---
 
 # Mutation testing with gooze
@@ -35,8 +35,12 @@ complexity. Check both before a run and tell the user what you find.
 
 ## The loop
 
-1. **Check the tools.** `gooze version`. If it's missing:
-   `go install gooze.dev/pkg/gooze@latest`. For diagnostics after each edit, the
+1. **Check the tools.** If `go.mod` has a `tool gooze.dev/pkg/gooze` line
+   (or that path in a `tool ( ... )` block), the project pins gooze as a Go
+   tool: run every gooze command below as `go tool gooze ...` (e.g.
+   `go tool gooze version`), and update it with
+   `go get -tool gooze.dev/pkg/gooze@latest`. Otherwise `gooze version`; if
+   it's missing: `go install gooze.dev/pkg/gooze@latest`. For diagnostics after each edit, the
    `goozels` binary is optional: `go install gooze.dev/pkg/goozels/cmd/goozels@latest`.
    **Keep them up to date.** gooze and goozels print a line like
    `gooze v1.4.1 is available (you have v1.3.0). Update: go install …@latest`
@@ -219,9 +223,9 @@ cannot change behaviour, never code that is merely hard to test (`main`,
 stdin, real network): leave those as honest survivors. Ask before adding
 ignores in bulk.
 
-gooze skips many equivalents itself (the loop above too, since v1.4.0, when
-its bound is a literal or the `len` of a variable never written), so don't add ignores
-for those; see
+gooze skips many equivalents itself (since v1.4.0 also the loop above, when
+its bound is a literal or the `len` of a variable never written), so don't
+add ignores for those; see
 [killing-survivors.md](killing-survivors.md#equivalents-gooze-skips-itself)
 for the list per release. After a gooze upgrade, an ignore on such a line
 may be redundant.

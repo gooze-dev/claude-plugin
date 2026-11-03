@@ -16,9 +16,22 @@ done
 notes=""
 fixes=""
 
-if ! command -v gooze >/dev/null 2>&1; then
+semver() { grep -o 'v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*' | head -n 1; }
+
+# gooze as a Go tool (go get -tool gooze.dev/pkg/gooze): go.mod names it in a
+# tool directive, pins it in a require line, and `go tool gooze` runs it with
+# no gooze on PATH. Its version comes from go.mod, since running `go tool` may
+# build or download. It wins over a gooze on PATH: it is the project's pin.
+tool_re='^[[:space:]]*(tool[[:space:]]+)?gooze\.dev/pkg/gooze[[:space:]]*$'
+if grep -Eq "$tool_re" "$dir/go.mod"; then
+	installed_gooze=$(grep -E '^[[:space:]]*(require[[:space:]]+)?gooze\.dev/pkg/gooze[[:space:]]+v' "$dir/go.mod" | semver)
+	update_gooze="go get -tool gooze.dev/pkg/gooze@latest"
+elif ! command -v gooze >/dev/null 2>&1; then
 	notes="gooze is not installed, so mutation tests can't run."
 	fixes="go install gooze.dev/pkg/gooze@latest"
+else
+	installed_gooze=$(gooze version </dev/null 2>&1 | semver)
+	update_gooze="go install gooze.dev/pkg/gooze@latest"
 fi
 
 # goozels releases before the agent hooks pass unknown arguments to gopls, so
@@ -36,11 +49,9 @@ esac
 # its opening marker records the guide version and the gooze version it was
 # written for, e.g. <!-- gooze:begin guide=1 gooze=v1.2.0 -->. Projects without
 # the guide get no notice.
-semver() { grep -o 'v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*' | head -n 1; }
 marker_field() { sed -n "s/.*<!-- gooze:begin.* $1=\([^ ]*\).*-->.*/\1/p" | head -n 1; }
 
 current_guide=$(marker_field guide 2>/dev/null <"${CLAUDE_PLUGIN_ROOT:-.}/skills/init/guide.md")
-installed_gooze=$(gooze version </dev/null 2>&1 | semver)
 
 # Newer releases. gooze and goozels record the latest release they found in a
 # cache that they refresh themselves in the background, at most daily, in Go's
@@ -62,7 +73,7 @@ older() {
 latest_gooze=$(cached_release gooze)
 if [ -n "$installed_gooze" ] && [ -n "$latest_gooze" ] && older "$installed_gooze" "$latest_gooze"; then
 	notes="${notes:+$notes }gooze $latest_gooze is available ($installed_gooze is installed)."
-	fixes="${fixes:+$fixes && }go install gooze.dev/pkg/gooze@latest"
+	fixes="${fixes:+$fixes && }$update_gooze"
 fi
 
 installed_goozels=$(echo "$goozels_version" | semver)

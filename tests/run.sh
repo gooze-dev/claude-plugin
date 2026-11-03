@@ -151,6 +151,58 @@ expect_message "missing goozels" "$out" "goozels is missing or too old"
 out=$(preflight "$P" "$BIN/none:$SYS")
 expect_message "both missing" "$out" "gooze is not installed" "goozels is missing or too old" " && "
 
+# --- SessionStart: gooze as a Go tool --------------------------------------------
+# `go get -tool gooze.dev/pkg/gooze@vX.Y.Z` records gooze in go.mod, and
+# `go tool gooze` runs it without a gooze binary on PATH. The session check
+# reads the version from go.mod, never runs `go tool` (it may build or download).
+
+# go_tool_project DIR VERSION FORM: a module that tracks gooze as a tool, with
+# a single "tool" line or a "tool ( ... )" block.
+go_tool_project() {
+	go_project "$1"
+	if [ "$3" = block ]; then
+		printf '\ntool (\n\tgolang.org/x/tools/cmd/stringer\n\tgooze.dev/pkg/gooze\n)\n' >>"$1/go.mod"
+	else
+		printf '\ntool gooze.dev/pkg/gooze\n' >>"$1/go.mod"
+	fi
+	printf '\nrequire gooze.dev/pkg/gooze %s // indirect\n' "$2" >>"$1/go.mod"
+}
+
+NOGOOZE="$BIN/goozels-new:$SYS"
+
+go_tool_project "$P" v1.1.1 line
+expect_silent "gooze as a Go tool: not missing" "$(preflight "$P" "$NOGOOZE")"
+
+go_tool_project "$P" v1.1.1 block
+expect_silent "gooze in a tool block: not missing" "$(preflight "$P" "$NOGOOZE")"
+
+go_project "$P"
+printf '\nrequire gooze.dev/pkg/gooze v1.1.1 // indirect\n' >>"$P/go.mod"
+expect_message "gooze required but not a tool: missing" "$(preflight "$P" "$NOGOOZE")" "gooze is not installed"
+
+go_project "$P"
+printf '\nrequire (\n\tgooze.dev/pkg/gooze v1.1.1 // indirect\n)\n' >>"$P/go.mod"
+expect_message "gooze in a require block but not a tool: missing" "$(preflight "$P" "$NOGOOZE")" "gooze is not installed"
+
+go_tool_project "$P" v1.1.1 line
+release_cache gooze v1.2.0
+out=$(preflight "$P" "$NOGOOZE")
+expect_message "newer gooze than the Go tool" "$out" "gooze v1.2.0 is available (v1.1.1 is installed)" "go get -tool gooze.dev/pkg/gooze@latest"
+expect_lacks "Go tool updated with go get, not go install" "$out" "go install gooze.dev/pkg/gooze"
+rm -rf "$CACHE"
+
+guide_block "guide=1 gooze=v1.0.0" >"$P/CLAUDE.md"
+expect_message "guide written for another gooze than the Go tool" "$(preflight "$P" "$NOGOOZE")" "CLAUDE.md was written for gooze v1.0.0" "v1.1.1 is installed"
+guide_block "guide=1 gooze=v1.1.1" >"$P/CLAUDE.md"
+expect_silent "guide matches the Go tool" "$(preflight "$P" "$NOGOOZE")"
+rm "$P/CLAUDE.md"
+
+# A Go tool wins over a gooze binary on PATH: it is the project's pinned version.
+go_tool_project "$P" v1.0.0 line
+release_cache gooze v1.1.1
+expect_message "Go tool version over the PATH binary" "$(preflight "$P" "$OK")" "gooze v1.1.1 is available (v1.0.0 is installed)"
+rm -rf "$CACHE"
+
 # --- SessionStart: newer releases ----------------------------------------------
 # Fake gooze is v1.1.1 and fake goozels v0.2.0.
 

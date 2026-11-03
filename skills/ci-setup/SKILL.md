@@ -105,6 +105,12 @@ GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.1
   `<!-- gooze:begin guide=N gooze=vX.Y.Z -->` marker (written by `/gooze:init`),
   pin that `vX.Y.Z` so local, CI and the guide agree; otherwise `v1.4.1`, the
   current release. Snippets in the reference files say `v1.4.1`; substitute.
+- **gooze as a Go tool**: if `go.mod` already has a `tool gooze.dev/pkg/gooze`
+  line (or that path in a `tool ( ... )` block), skip the install line and
+  call `go tool gooze ...` in every snippet: `go.mod` pins the version, so
+  don't add another pin. Don't suggest switching to it unasked: `go get -tool`
+  raises the module's `go` line to 1.27.3 and adds about 55 indirect
+  requires.
 - **`GOTOOLCHAIN=auto`**: gooze v1.4.1 needs Go >= 1.27.3 to build. Official
   `golang:*` images set `GOTOOLCHAIN=local`, so on an older image the plain
   install fails with "requires go >= 1.27.3". With `auto`, Go fetches the newer

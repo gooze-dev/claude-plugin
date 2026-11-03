@@ -35,6 +35,9 @@ Adapt:
   (`GOBIN=$(abspath $(bin)) GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@$(GOOZE_VERSION)`),
   call `$(bin)/gooze`, keep `GOOZE_VERSION` with the other `*_VERSION` pins,
   and add `install-gooze` to an existing `install-tools` aggregate.
+- **gooze as a Go tool** (`tool gooze.dev/pkg/gooze` in `go.mod`): drop
+  `GOOZE_VERSION` and `install-gooze`, and call `go tool gooze` in the
+  recipes.
 - **Existing exclusions** in the `test` target (e.g. `grep -v /mocks`): mirror
   them as `-x` regexes (they match file paths), or put them in `gooze.yaml`
   under `paths.exclude` if that file exists.

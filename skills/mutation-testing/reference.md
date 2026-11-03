@@ -44,6 +44,11 @@ names a release accepts under `--mutagens`.
 | `gooze config schema` | the JSON Schema of `gooze.yaml`, for editors (v1.5.0+) |
 | `gooze version` | print the version (`gooze --version` too, v1.5.0+) |
 
+Installed as a Go tool (`go get -tool gooze.dev/pkg/gooze@v1.4.1`, which
+adds a `tool` line to `go.mod`), every command runs as `go tool gooze ...`
+at the version `go.mod` pins. That raises the module's `go` line to gooze's
+(1.27.3) and adds its dependencies (about 55) as indirect requires.
+
 There is no `gooze list` or top-level `gooze view`. <!-- lint-ignore: names commands that do not exist -->
 
 ### `gooze run` flags
