@@ -214,10 +214,15 @@ with no names it skips all of them. A directive covers **every** mutant of that
 mutagen on its line, including killable ones, so first kill those with tests,
 and put the reason in a comment starting `Equivalent:` on the line above. Ignore only mutants that
 cannot change behaviour, never code that is merely hard to test (`main`,
-stdin, real network): leave those as honest survivors. gooze v1.2.0+ no longer
-generates the common equivalents of comparing a string with `""` or a
-`len`/`cap` with `0`, so don't add ignores for those. Ask before adding ignores
-in bulk.
+stdin, real network): leave those as honest survivors. Ask before adding
+ignores in bulk.
+
+gooze skips many equivalents itself (the loop above too, since v1.4.0, when
+its bound is a literal or the `len` of a variable never written), so don't add ignores
+for those; see
+[killing-survivors.md](killing-survivors.md#equivalents-gooze-skips-itself)
+for the list per release. After a gooze upgrade, an ignore on such a line
+may be redundant.
 
 ## gooze.yaml
 
