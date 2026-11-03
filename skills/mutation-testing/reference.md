@@ -69,7 +69,9 @@ with any of them writes to `<output>/run/` and scores only its selection;
 `gooze report merge` folds it into the main reports.
 
 Global: `-x, --exclude REGEX` (repeatable), `-o, --output DIR` (default
-`.gooze-reports`), `--no-cache` (re-test everything), `-v, --verbose`.
+`.gooze-reports`), `--no-cache` (re-test everything), `--no-update-check`,
+`-v, --verbose`, `--log-output FILE`, `--log-level debug|info|warn|error`
+(v1.5.0+, key `log.level`; `--verbose` overrides it).
 
 ## Statuses and score
 
@@ -134,13 +136,30 @@ a file holding partial results is re-tested in full by the next full run. `run/`
 
 ## gooze.yaml keys
 
-`version`, `output`, `no-cache`, `paths.exclude`, `run.parallel`,
-`run.mutation_timeout`, `run.coverage_profile`, `log.filename`, `log.level`,
-`log.verbose`, `log.max_size`, `log.max_backups`, `log.max_age`, `log.compress`,
-`no-update-check`, `run.diff`, `run.mutagens`, `run.workspace`, `run.fail_fast`, `threshold.total`,
-`threshold.average`, `threshold.file`, `threshold.max_survivors`, `threshold.diff.total`,
-`threshold.diff.average` and `threshold.diff.file` (`--run` has no key, like
-`go test -run`). Environment variables use the `GOOZE_` prefix (e.g. `GOOZE_LOG_MAX_SIZE`, `GOOZE_RUN_MUTAGENS`).
+`output`, `no_cache`, `no_update_check`, `paths.exclude`, `run.parallel`,
+`run.mutation_timeout`, `run.coverage_profile`, `run.diff`, `run.mutagens`,
+`run.workspace`, `run.fail_fast`, `run.go_cache`, `run.go_cache_size`,
+`run.go_cache_prewarm`, `mutagen.comparison.enum_bounds`, `threshold.total`,
+`threshold.average`, `threshold.file`, `threshold.max_survivors`,
+`threshold.diff.total`, `threshold.diff.average`, `threshold.diff.file`,
+`report.format`, `log.filename`, `log.level`, `log.verbose`, `log.max_size`,
+`log.max_backups`, `log.max_age` and `log.compress` (`--run` has no key, like
+`go test -run`). Environment variables use the `GOOZE_` prefix (e.g.
+`GOOZE_LOG_MAX_SIZE`, `GOOZE_RUN_MUTAGENS`). `gooze config show` (v1.5.0+)
+lists every key with its effective value, source and env var; `gooze config
+schema` prints the JSON Schema for editors.
+
+- **v1.5.0+**: `no_cache` and `no_update_check` replace `no-cache` and
+  `no-update-check`, which still work with a deprecation warning; older
+  releases call the snake case names unknown. `version` is ignored, with a
+  warning. `run.go_cache: isolated` (default; or `shared`) keeps the builds of
+  mutants out of `GOCACHE` in gooze's own cache, trimmed to
+  `run.go_cache_size` MB; `run.go_cache_prewarm` builds each package's tests
+  in `GOCACHE` first.
+- **v1.4.0+**: `mutagen.comparison.enum_bounds` (off) skips comparison
+  mutants at an enum type's lowest and highest constant; only safe when no
+  value of the type is converted from an arbitrary integer.
+  `report.format` sets `gooze report view --format`.
 
 ## goozels
 

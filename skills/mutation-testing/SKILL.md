@@ -224,7 +224,12 @@ in bulk.
 gooze reads only `./gooze.yaml`. If it can't parse it, gooze **ignores the whole
 file** and runs on defaults, with only a one-line warning. `goozels check
 gooze.yaml` validates it. A common slip is `key:value` without a space after
-the colon.
+the colon. `gooze config show` (v1.5.0+) prints the value gooze actually uses
+for each key and where it came from (flag, env, `gooze.yaml` or default).
+gooze v1.5.0+ renames `no-cache` and `no-update-check` to `no_cache` and
+`no_update_check` and ignores `version`; it warns about the old names but
+still reads them. Don't rename them for an older gooze, which calls the new
+names unknown.
 
 ## Reference
 

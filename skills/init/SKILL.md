@@ -26,14 +26,18 @@ edit. Don't commit.
 
 ## 1. gooze.yaml
 
-Glob for `gooze.yaml` in the repo root. If it exists, leave it alone (mention
-`goozels check gooze.yaml` validates it). If not, offer `gooze config init`: it
-writes `./gooze.yaml` with the defaults (`version: 1`, `output: .gooze-reports`,
-`paths.exclude: []`, `run.parallel: 1`, `run.mutation_timeout: 120`,
-`run.coverage_profile: ""`, `no-cache: false`, `log.*`) and refuses to
-overwrite an existing file. Excludes given as flags are written into it:
-`gooze config init -x mocks/ -x '_gen\.go$'`. Suggest excludes for
-directories the repo actually has (mocks, generated code), if any.
+Glob for `gooze.yaml` in the repo root. If it exists, keep it (mention
+`goozels check gooze.yaml` validates it, and `gooze config show`, v1.5.0+,
+prints each key's effective value and where it comes from). If it uses
+`no-cache` or `no-update-check` and gooze is v1.5.0+, say gooze warns that
+they are deprecated, and offer to rename them `no_cache` and
+`no_update_check` (older gooze calls the new names unknown) and to drop a
+`version:` line, which v1.5.0+ ignores. If there is no file, offer
+`gooze config init`: it writes `./gooze.yaml` with every key at its default,
+each with a comment, and refuses to overwrite an existing file. It ignores
+flags such as `-x`, so to exclude directories the repo actually has (mocks,
+generated code), offer to set `paths.exclude` in the written file afterwards,
+e.g. `exclude: ['mocks/', '_gen\.go$']`.
 
 ## 2. Guide block in CLAUDE.md / AGENTS.md
 
