@@ -31,12 +31,12 @@ edit. Don't commit.
 ## 1. gooze.yaml
 
 Glob for `gooze.yaml` in the repo root. If it exists, keep it (mention
-`goozels check gooze.yaml` validates it, and `gooze config show`, v1.5.0+,
+`goozels check gooze.yaml` validates it, and `gooze config show`, v1.4.2+,
 prints each key's effective value and where it comes from). If it uses
-`no-cache` or `no-update-check` and gooze is v1.5.0+, say gooze warns that
+`no-cache` or `no-update-check` and gooze is v1.4.2+, say gooze warns that
 they are deprecated, and offer to rename them `no_cache` and
 `no_update_check` (older gooze calls the new names unknown) and to drop a
-`version:` line, which v1.5.0+ ignores. If there is no file, offer
+`version:` line, which v1.4.2+ ignores. If there is no file, offer
 `gooze config init`: it writes `./gooze.yaml` with every key at its default,
 each with a comment, and refuses to overwrite an existing file. It ignores
 flags such as `-x`, so to exclude directories the repo actually has (mocks,

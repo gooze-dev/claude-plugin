@@ -1,6 +1,6 @@
 # gooze reference
 
-Verified against gooze v1.4.1 and main (v1.5.0+ features are marked). Full docs: <https://gooze.dev/docs>.
+Verified against gooze v1.4.2 (features newer than v1.4.1 are marked v1.4.2+). Full docs: <https://gooze.dev/docs>.
 
 ## Mutagens
 
@@ -36,15 +36,15 @@ names a release accepts under `--mutagens`.
 | `gooze run --estimate [paths...]` | list files and mutation counts without running tests |
 | `gooze report view [paths...]` | per-file scores and survivors (v1.2.0+; filter by path, e.g. `./internal/foo/...`) |
 | `gooze report view --all [paths...]` | every mutation with its status and diff |
-| `gooze report view --by-line [paths...]` | the survivors once per line of a file, changes folded; with `--format github` it groups the summary after the annotations (v1.5.0+; not with `--all`, `--format sarif` or `--format codeclimate`/`gitlab`, exit 2) |
+| `gooze report view --by-line [paths...]` | the survivors once per line of a file, changes folded; with `--format github` it groups the summary after the annotations (v1.4.2+; not with `--all`, `--format sarif` or `--format codeclimate`/`gitlab`, exit 2) |
 | `gooze report merge` | merge sharded reports (`shard_N/`) into one directory; also folds in a narrowed run (`run/`) |
 | `gooze report push <ref>` / `pull <ref>` | store or fetch reports in an OCI registry (CI baselines) |
 | `gooze config init` | write a default `gooze.yaml` |
-| `gooze config show` | every config key with its effective value, its source (flag, env, `gooze.yaml` or default) and env var (v1.5.0+) |
-| `gooze config schema` | the JSON Schema of `gooze.yaml`, for editors (v1.5.0+) |
-| `gooze version` | print the version (`gooze --version` too, v1.5.0+) |
+| `gooze config show` | every config key with its effective value, its source (flag, env, `gooze.yaml` or default) and env var (v1.4.2+) |
+| `gooze config schema` | the JSON Schema of `gooze.yaml`, for editors (v1.4.2+) |
+| `gooze version` | print the version (`gooze --version` too, v1.4.2+) |
 
-Installed as a Go tool (`go get -tool gooze.dev/pkg/gooze@v1.4.1`, which
+Installed as a Go tool (`go get -tool gooze.dev/pkg/gooze@v1.4.2`, which
 adds a `tool` line to `go.mod`), every command runs as `go tool gooze ...`
 at the version `go.mod` pins. That raises the module's `go` line to gooze's
 (1.27.3) and adds its dependencies (about 55) as indirect requires.
@@ -76,13 +76,13 @@ with any of them writes to `<output>/run/` and scores only its selection;
 Global: `-x, --exclude REGEX` (repeatable), `-o, --output DIR` (default
 `.gooze-reports`), `--no-cache` (re-test everything), `--no-update-check`,
 `-v, --verbose`, `--log-output FILE`, `--log-level debug|info|warn|error`
-(v1.5.0+, key `log.level`; `--verbose` overrides it).
+(v1.4.2+, key `log.level`; `--verbose` overrides it).
 
 ## Statuses and score
 
 Each mutation ends as `killed`, `survived`, `skipped`, `timeout`, `error` or
 `not_covered`. Score = killed ÷ (all mutations except `error`).
-`gooze report view` (v1.5.0+) has `TIMEOUT` and `ERROR` columns and lists
+`gooze report view` (v1.4.2+) has `TIMEOUT` and `ERROR` columns and lists
 mutants that did not build under `Build errors (N):`; `gooze run` prints no
 diff for them. A build error is no test gap: it isn't scored, needs no test,
 and the `github`, `sarif` and `codeclimate` formats skip it.
@@ -99,7 +99,7 @@ minimum for every file. Files with no scored mutations are ignored. A
 `gooze report view -o .gooze-reports/run` of its reports (v1.4.0+; of its
 merged shards v1.4.1+). A shard
 (`-s I/N`, N > 1) checks none; `gooze report merge` does (for `--diff`
-shards, `-o .gooze-reports/run`, the diff ones since v1.5.0). Releases before
+shards, `-o .gooze-reports/run`, the diff ones since v1.4.2). Releases before
 v1.3.0 lack them: check that `gooze run --help` lists `--threshold-total`.
 
 `--threshold-max-survivors N` (`threshold.max_survivors`, env
@@ -151,11 +151,11 @@ a file holding partial results is re-tested in full by the next full run. `run/`
 `report.format`, `log.filename`, `log.level`, `log.verbose`, `log.max_size`,
 `log.max_backups`, `log.max_age` and `log.compress` (`--run` has no key, like
 `go test -run`). Environment variables use the `GOOZE_` prefix (e.g.
-`GOOZE_LOG_MAX_SIZE`, `GOOZE_RUN_MUTAGENS`). `gooze config show` (v1.5.0+)
+`GOOZE_LOG_MAX_SIZE`, `GOOZE_RUN_MUTAGENS`). `gooze config show` (v1.4.2+)
 lists every key with its effective value, source and env var; `gooze config
 schema` prints the JSON Schema for editors.
 
-- **v1.5.0+**: `no_cache` and `no_update_check` replace `no-cache` and
+- **v1.4.2+**: `no_cache` and `no_update_check` replace `no-cache` and
   `no-update-check`, which still work with a deprecation warning; older
   releases call the snake case names unknown. `version` is ignored, with a
   warning. `run.go_cache: isolated` (default; or `shared`) keeps the builds of

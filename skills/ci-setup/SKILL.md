@@ -96,22 +96,22 @@ usually small. The cache does not see cross-file test dependencies; a nightly
 ## Install line (all targets)
 
 ```sh
-GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.1
+GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.2
 ```
 
 - **Pin a version** in CI so a new gooze release can't change results or
   break the pipeline unannounced; bump it deliberately. `@latest` is fine for
   a quick local try. Which version: if `CLAUDE.md` or `AGENTS.md` has a
   `<!-- gooze:begin guide=N gooze=vX.Y.Z -->` marker (written by `/gooze:init`),
-  pin that `vX.Y.Z` so local, CI and the guide agree; otherwise `v1.4.1`, the
-  current release. Snippets in the reference files say `v1.4.1`; substitute.
+  pin that `vX.Y.Z` so local, CI and the guide agree; otherwise `v1.4.2`, the
+  current release. Snippets in the reference files say `v1.4.2`; substitute.
 - **gooze as a Go tool**: if `go.mod` already has a `tool gooze.dev/pkg/gooze`
   line (or that path in a `tool ( ... )` block), skip the install line and
   call `go tool gooze ...` in every snippet: `go.mod` pins the version, so
   don't add another pin. Don't suggest switching to it unasked: `go get -tool`
   raises the module's `go` line to 1.27.3 and adds about 55 indirect
   requires.
-- **`GOTOOLCHAIN=auto`**: gooze v1.4.1 needs Go >= 1.27.3 to build. Official
+- **`GOTOOLCHAIN=auto`**: gooze v1.4.2 needs Go >= 1.27.3 to build. Official
   `golang:*` images set `GOTOOLCHAIN=local`, so on an older image the plain
   install fails with "requires go >= 1.27.3". With `auto`, Go fetches the newer
   toolchain just to build gooze; the project's tests still run on its own Go.
@@ -130,7 +130,7 @@ GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.1
 `--insecure`). `gooze config init`, `gooze version`.
 `gooze run`, `gooze report view` and `gooze report merge` take
 `--threshold-total`, `--threshold-average` and `--threshold-file`;
-`gooze run`, `gooze report view` and (v1.5.0+) `gooze report merge` also
+`gooze run`, `gooze report view` and (v1.4.2+) `gooze report merge` also
 take `--threshold-diff-total`, `--threshold-diff-average` and
 `--threshold-diff-file` (see below).
 `gooze report view --format text|github|gitlab|sarif|codeclimate` (config
@@ -171,7 +171,7 @@ in `gooze.yaml` or as env vars:
 - **Shards** (`-s I/N`, N > 1) never check thresholds. Put them on
   `gooze report merge` or the `gooze report view` after it. For `--diff`
   shards, `gooze report merge -o .gooze-reports/run` checks the diff
-  thresholds since v1.5.0 (the plain ones before).
+  thresholds since v1.4.2 (the plain ones before).
 - Below a threshold gooze still writes the reports and prints the score
   line, then one `Error: ... is below threshold.total 60%` line per breach
   on stderr, and exits 3.

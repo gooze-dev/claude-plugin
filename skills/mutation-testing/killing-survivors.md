@@ -28,7 +28,7 @@ existing tests to another style while killing a mutant.
 
 ## Decide each survivor: gap or equivalent
 
-Start from `gooze report view --by-line` (gooze v1.5.0+), which lists the
+Start from `gooze report view --by-line` (gooze v1.4.2+), which lists the
 survivors once per line: one test usually kills every mutant on a line, e.g.
 the boundary case kills `<=`, `!=` and `>=` of the same comparison at once.
 Still decide each mutant on the line; a line can mix gaps and equivalents.
@@ -224,7 +224,7 @@ On an older gooze, suggest the upgrade before adding ignores for them:
   returned next to a non-nil error or a literal `false` ok; map size hints
   in `make(map[K]V, n)`; with `mutagen.comparison.enum_bounds: true`,
   comparisons at an enum type's lowest and highest constant.
-- **v1.5.0+**: comparisons that no value can pass at an integer type's
+- **v1.4.2+**: comparisons that no value can pass at an integer type's
   `math.Min*`/`math.Max*` (`v == math.MinInt64` → `<=`), for parameters and
   vars declared with a predeclared integer type (not `:=`, `byte`, `rune`);
   `strconv.ParseInt`/`ParseUint` bitSize `64` → `0`, and both bitSize
