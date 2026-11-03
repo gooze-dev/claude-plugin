@@ -1,7 +1,7 @@
 ---
 name: mutation-testing
 description: Runs gooze mutation testing on Go code and kills surviving mutants by writing better tests, following the project's own testing conventions. Use when the user asks about mutation testing, gooze, a mutation score, surviving or not-covered mutants, test quality or test gaps in a Go project, //gooze:ignore directives, or gooze.yaml.
-allowed-tools: Bash(gooze run *) Bash(gooze report view) Bash(gooze report view *) Bash(gooze report merge) Bash(gooze version) Bash(goozels check *) Bash(go test *) Bash(go tool cover *) Bash(gocyclo *)
+allowed-tools: Bash(gooze run *) Bash(gooze report view) Bash(gooze report view *) Bash(gooze report merge) Bash(gooze version) Bash(gooze --version) Bash(gooze config show) Bash(goozels check *) Bash(go test *) Bash(go tool cover *) Bash(gocyclo *)
 ---
 
 # Mutation testing with gooze
@@ -67,7 +67,11 @@ complexity. Check both before a run and tell the user what you find.
    Checking a `_test.go` file also lists the survivors of the source files it
    tests. With the goozels hook installed, these lines appear by themselves after
    each edit (`gooze results from the last run:`), including test edits. Without
-   goozels, use `gooze report view [paths]`.
+   goozels, use `gooze report view [paths]`; with gooze v1.5.0+, add
+   `--by-line` to list the survivors once per line, as in
+   `calc.go:7: 2 survived (comparison ×2): return n <= hi -> !=, <`. One test
+   usually kills every mutant on a line, so work through survivors line by
+   line, not mutant by mutant.
    - **`results are from before X changed`**: the file changed since gooze ran,
      so no line markers are shown. Rerun the command it prints before trusting
      any score.
@@ -75,6 +79,9 @@ complexity. Check both before a run and tell the user what you find.
      tests; rerun to see their effect.
    - **`no gooze results for X yet`**: gooze hasn't run on it (or found nothing
      to mutate); run the command it prints.
+   - **`gooze report view` shows no files** but ends with `found shard_0, ...
+     but no merged reports` or `the last --diff or --run reports are not
+     merged` (v1.5.0+): run the command it names.
 5. **Kill survivors by improving tests**, not by changing production code.
    First read how this project tests (a testing section in `CLAUDE.md` or
    `AGENTS.md`, `TESTING*.md`, the neighbouring `_test.go` files) and write

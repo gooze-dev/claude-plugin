@@ -36,10 +36,13 @@ names a release accepts under `--mutagens`.
 | `gooze run --estimate [paths...]` | list files and mutation counts without running tests |
 | `gooze report view [paths...]` | per-file scores and survivors (v1.2.0+; filter by path, e.g. `./internal/foo/...`) |
 | `gooze report view --all [paths...]` | every mutation with its status and diff |
+| `gooze report view --by-line [paths...]` | the survivors once per line of a file, changes folded; with `--format github` it groups the summary after the annotations (v1.5.0+; not with `--all`, `--format sarif` or `--format codeclimate`/`gitlab`, exit 2) |
 | `gooze report merge` | merge sharded reports (`shard_N/`) into one directory; also folds in a narrowed run (`run/`) |
 | `gooze report push <ref>` / `pull <ref>` | store or fetch reports in an OCI registry (CI baselines) |
 | `gooze config init` | write a default `gooze.yaml` |
-| `gooze version` | print the version |
+| `gooze config show` | every config key with its effective value, its source (flag, env, `gooze.yaml` or default) and env var (v1.5.0+) |
+| `gooze config schema` | the JSON Schema of `gooze.yaml`, for editors (v1.5.0+) |
+| `gooze version` | print the version (`gooze --version` too, v1.5.0+) |
 
 There is no `gooze list` or top-level `gooze view`. <!-- lint-ignore: names commands that do not exist -->
 
@@ -72,6 +75,10 @@ Global: `-x, --exclude REGEX` (repeatable), `-o, --output DIR` (default
 
 Each mutation ends as `killed`, `survived`, `skipped`, `timeout`, `error` or
 `not_covered`. Score = killed ÷ (all mutations except `error`).
+`gooze report view` (v1.5.0+) has `TIMEOUT` and `ERROR` columns and lists
+mutants that did not build under `Build errors (N):`; `gooze run` prints no
+diff for them. A build error is no test gap: it isn't scored, needs no test,
+and the `github`, `sarif` and `codeclimate` formats skip it.
 
 ## Thresholds and exit codes
 

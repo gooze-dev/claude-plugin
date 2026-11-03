@@ -275,7 +275,9 @@ instead: `gooze report view -o .gooze-reports/run --format github --threshold-di
 - Prefer the flag or `GOOZE_REPORT_FORMAT: github` in the job's `env:`. Don't
   put `report.format: github` in `gooze.yaml`: local `gooze report view` would
   print annotations too.
-- `--all` can't be combined with `--format github|sarif` (exit 2).
+- `--all` can't be combined with `--format github|sarif` (exit 2). With
+  gooze v1.5.0+, `--by-line` groups the summary after the annotations per
+  line too; it can't be combined with `--format sarif` (exit 2).
 
 Code scanning, from the default branch's full run (the merge job when
 sharded), so alerts track survivors across commits:

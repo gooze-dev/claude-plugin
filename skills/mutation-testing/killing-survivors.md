@@ -27,6 +27,11 @@ existing tests to another style while killing a mutant.
 
 ## Decide each survivor: gap or equivalent
 
+Start from `gooze report view --by-line` (gooze v1.5.0+), which lists the
+survivors once per line: one test usually kills every mutant on a line, e.g.
+the boundary case kills `<=`, `!=` and `>=` of the same comparison at once.
+Still decide each mutant on the line; a line can mix gaps and equivalents.
+
 For every survivor, ask one question first: **can any input make the mutated
 code behave differently?**
 
