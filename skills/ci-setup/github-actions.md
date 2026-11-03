@@ -50,7 +50,7 @@ saved on its base branch), run, save under the commit SHA.
         with:
           go-version-file: go.mod        # same as the existing test job
       - name: Install gooze
-        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.1
+        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.2
       - name: Restore gooze reports
         uses: actions/cache/restore@v4
         with:
@@ -100,7 +100,7 @@ the `shard_N/` layout exactly (this is what gooze's own CI does).
         with:
           go-version-file: go.mod
       - name: Install gooze
-        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.1
+        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.2
       - name: Restore gooze reports
         uses: actions/cache/restore@v4
         with:
@@ -126,7 +126,7 @@ the `shard_N/` layout exactly (this is what gooze's own CI does).
         with:
           go-version-file: go.mod
       - name: Install gooze
-        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.1
+        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.2
       # Base reports first, so files no shard re-tested keep their cached results.
       - name: Restore gooze reports
         uses: actions/cache/restore@v4
@@ -236,7 +236,7 @@ on pull requests, and gate on the merged changed lines:
 
 Gate merged diff shards with `--threshold-diff-*`: gooze v1.4.1+ scores them
 on the changed lines and ignores the plain thresholds there (v1.3.0 applied
-only `--threshold-total`, as a flag). With gooze v1.5.0+ the merge step can
+only `--threshold-total`, as a flag). With gooze v1.4.2+ the merge step can
 gate itself: `gooze report merge -o .gooze-reports/run --threshold-diff-total 100`.
 Push and pull
 requests then share one matrix: full shards and the baseline publish on the
@@ -278,7 +278,7 @@ instead: `gooze report view -o .gooze-reports/run --format github --threshold-di
   put `report.format: github` in `gooze.yaml`: local `gooze report view` would
   print annotations too.
 - `--all` can't be combined with `--format github|sarif` (exit 2). With
-  gooze v1.5.0+, `--by-line` groups the summary after the annotations per
+  gooze v1.4.2+, `--by-line` groups the summary after the annotations per
   line too; it can't be combined with `--format sarif` (exit 2).
 
 Code scanning, from the default branch's full run (the merge job when
