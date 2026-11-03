@@ -124,8 +124,9 @@ GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.1
 `--insecure`). `gooze config init`, `gooze version`.
 `gooze run`, `gooze report view` and `gooze report merge` take
 `--threshold-total`, `--threshold-average` and `--threshold-file`;
-`gooze run` and `gooze report view` also take `--threshold-diff-total`,
-`--threshold-diff-average` and `--threshold-diff-file` (see below).
+`gooze run`, `gooze report view` and (v1.5.0+) `gooze report merge` also
+take `--threshold-diff-total`, `--threshold-diff-average` and
+`--threshold-diff-file` (see below).
 `gooze report view --format text|github|gitlab|sarif|codeclimate` (config
 `report.format`, env `GOOZE_REPORT_FORMAT`) writes survivors as GitHub
 annotations before the summary, or instead of it as a SARIF 2.1.0 log or a
@@ -162,7 +163,9 @@ in `gooze.yaml` or as env vars:
   ignores the plain ones. Every other run, view and merge use the plain
   thresholds.
 - **Shards** (`-s I/N`, N > 1) never check thresholds. Put them on
-  `gooze report merge` or the `gooze report view` after it.
+  `gooze report merge` or the `gooze report view` after it. For `--diff`
+  shards, `gooze report merge -o .gooze-reports/run` checks the diff
+  thresholds since v1.5.0 (the plain ones before).
 - Below a threshold gooze still writes the reports and prints the score
   line, then one `Error: ... is below threshold.total 60%` line per breach
   on stderr, and exits 3.

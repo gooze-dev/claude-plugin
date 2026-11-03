@@ -236,7 +236,9 @@ on pull requests, and gate on the merged changed lines:
 
 Gate merged diff shards with `--threshold-diff-*`: gooze v1.4.1+ scores them
 on the changed lines and ignores the plain thresholds there (v1.3.0 applied
-only `--threshold-total`, as a flag). Push and pull
+only `--threshold-total`, as a flag). With gooze v1.5.0+ the merge step can
+gate itself: `gooze report merge -o .gooze-reports/run --threshold-diff-total 100`.
+Push and pull
 requests then share one matrix: full shards and the baseline publish on the
 default branch, diff shards on pull requests. A shard with no changed lines
 still writes its directory, so the merge and gate pass with

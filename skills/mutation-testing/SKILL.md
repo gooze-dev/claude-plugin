@@ -154,7 +154,9 @@ guess flags.
   run will cover: `git diff --name-only origin/main -- '*_test.go'`. Avoid
   signature changes that force edits to big test files; when one is needed,
   expect to kill those old survivors, or split the change into its own pull
-  request.
+  request. Since gooze v1.5.0 only `x_test.go` pulls in `x.go`; before, a
+  source without its own test file was pulled in by whichever test file of
+  its package sorted first.
 
 How they behave:
 - A narrowed run writes to `.gooze-reports/run/` (replaced each time) and

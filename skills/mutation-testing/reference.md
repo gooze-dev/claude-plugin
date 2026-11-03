@@ -55,7 +55,7 @@ There is no `gooze list` or top-level `gooze view`. <!-- lint-ignore: names comm
 | `--estimate` | preview only |
 | `--mutation-timeout SEC` | per-mutation test timeout (default 120) |
 | `--coverage-profile FILE` | Go coverage profile; mutations on uncovered lines become `not_covered` without running tests |
-| `--diff REF` | only lines changed since the merge base of `REF` and HEAD (needs git) |
+| `--diff REF` | only lines changed since the merge base of `REF` and HEAD (needs git), plus every line of `x.go` when `x_test.go` changed |
 | `--run REGEX` | only functions matching, as for `go test -run` (`Name`, `Type.Name`); not with `--shard` |
 | `--mutagens LIST` | only these mutagens, comma-separated |
 | `--workspace MODE` | how mutants are built: `overlay` (default) or `deep-copy`; see [killing-survivors.md](killing-survivors.md#tests-that-dont-see-the-mutant) |
@@ -93,7 +93,8 @@ minimum for every file. Files with no scored mutations are ignored. A
 (`threshold.diff.*`) instead, scored on the changed lines, and so does
 `gooze report view -o .gooze-reports/run` of its reports (v1.4.0+; of its
 merged shards v1.4.1+). A shard
-(`-s I/N`, N > 1) checks none; `gooze report merge` does. Releases before
+(`-s I/N`, N > 1) checks none; `gooze report merge` does (for `--diff`
+shards, `-o .gooze-reports/run`, the diff ones since v1.5.0). Releases before
 v1.3.0 lack them: check that `gooze run --help` lists `--threshold-total`.
 
 `--threshold-max-survivors N` (`threshold.max_survivors`, env
