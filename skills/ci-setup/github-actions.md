@@ -50,7 +50,7 @@ saved on its base branch), run, save under the commit SHA.
         with:
           go-version-file: go.mod        # same as the existing test job
       - name: Install gooze
-        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.3.0
+        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.1
       - name: Restore gooze reports
         uses: actions/cache/restore@v4
         with:
@@ -100,7 +100,7 @@ the `shard_N/` layout exactly (this is what gooze's own CI does).
         with:
           go-version-file: go.mod
       - name: Install gooze
-        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.3.0
+        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.1
       - name: Restore gooze reports
         uses: actions/cache/restore@v4
         with:
@@ -126,7 +126,7 @@ the `shard_N/` layout exactly (this is what gooze's own CI does).
         with:
           go-version-file: go.mod
       - name: Install gooze
-        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.3.0
+        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.1
       # Base reports first, so files no shard re-tested keep their cached results.
       - name: Restore gooze reports
         uses: actions/cache/restore@v4
@@ -231,11 +231,12 @@ on pull requests, and gate on the merged changed lines:
         run: gooze report merge -o .gooze-reports/run
       - name: Changed lines must be killed
         if: github.event_name == 'pull_request'
-        run: gooze report view -o .gooze-reports/run --threshold-total 100
+        run: gooze report view -o .gooze-reports/run --threshold-diff-total 100
 ```
 
-Pass the threshold as a flag there: gooze v1.3.0 doesn't apply
-`threshold.diff.*` from `gooze.yaml` to merged diff shards. Push and pull
+Gate merged diff shards with `--threshold-diff-*`: gooze v1.4.1+ scores them
+on the changed lines and ignores the plain thresholds there (v1.3.0 applied
+only `--threshold-total`, as a flag). Push and pull
 requests then share one matrix: full shards and the baseline publish on the
 default branch, diff shards on pull requests. A shard with no changed lines
 still writes its directory, so the merge and gate pass with
@@ -248,7 +249,7 @@ prints a workflow annotation per line with surviving mutants (then the usual
 summary), and GitHub shows it on that line of the PR's changed files.
 `--format sarif` writes a SARIF 2.1.0 log instead of the summary, for GitHub
 code scanning. Use them only if the pinned gooze's `gooze report view --help`
-lists `--format` (newer than v1.3.0); otherwise offer a version bump or skip it.
+lists `--format` (v1.4.0+); otherwise offer a version bump or skip it.
 Docs: <https://gooze.dev/docs/ci/github#survivors>.
 
 Annotations, in the pull request job. Take the threshold off the run step,
@@ -264,7 +265,7 @@ so the view step always runs, and gate there instead:
 ```
 
 When the diff run is sharded, put `--format github` on the merged gate
-instead: `gooze report view -o .gooze-reports/run --format github --threshold-total 100`.
+instead: `gooze report view -o .gooze-reports/run --format github --threshold-diff-total 100`.
 
 - A line with a surviving mutant is a `warning`; a line whose mutants are only
   not covered, timed out or skipped is a `notice`. Several mutants on one line

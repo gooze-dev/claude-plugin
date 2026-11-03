@@ -1,6 +1,6 @@
 # gooze reference
 
-Verified against gooze v1.3.0. Full docs: <https://gooze.dev/docs>.
+Verified against gooze v1.4.1 and main (v1.5.0+ features are marked). Full docs: <https://gooze.dev/docs>.
 
 ## Mutagens
 
@@ -81,15 +81,17 @@ Each mutation ends as `killed`, `survived`, `skipped`, `timeout`, `error` or
 ...): the score of all mutations, the mean of per-file scores, and the
 minimum for every file. Files with no scored mutations are ignored. A
 `gooze run --diff REF` run uses `--threshold-diff-total|average|file`
-(`threshold.diff.*`) instead, scored on the changed lines. A shard
+(`threshold.diff.*`) instead, scored on the changed lines, and so does
+`gooze report view -o .gooze-reports/run` of its reports (v1.4.0+; of its
+merged shards v1.4.1+). A shard
 (`-s I/N`, N > 1) checks none; `gooze report merge` does. Releases before
 v1.3.0 lack them: check that `gooze run --help` lists `--threshold-total`.
 
 `--threshold-max-survivors N` (`threshold.max_survivors`, env
 `GOOZE_THRESHOLD_MAX_SURVIVORS`; a count, `0` = off) fails the same commands
 when more than N mutants survive. Only `survived` counts; a `--diff` run
-counts the survivors on its changed lines. Releases after v1.3.0 have it:
-check that `gooze run --help` lists it.
+counts the survivors on its changed lines. v1.4.0+: check
+that `gooze run --help` lists it.
 
 `gooze run --fail-fast POLICY` (`run.fail_fast`, env `GOOZE_RUN_FAIL_FAST`,
 default `off`) stops before every mutant is tested: `gate` once a threshold
@@ -100,8 +102,8 @@ usual breach lines), `file` skips the rest of a file that can't meet
 The results so far are saved; the next run tests only what was left. The
 score line ends with `stopped early by fail-fast POLICY after N of M` or
 `fail-fast file skipped N of M`. For a quick check after an edit,
-`gooze run --fail-fast first --run '^Func$' ./pkg` answers fastest. Releases
-after v1.3.0 have it: check `gooze run --help`.
+`gooze run --fail-fast first --run '^Func$' ./pkg` answers fastest. v1.4.0+:
+check `gooze run --help`.
 
 | Exit | Meaning |
 |---|---|

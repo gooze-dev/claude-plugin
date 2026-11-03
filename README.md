@@ -26,7 +26,7 @@ In Claude Code:
 Then install the tools (on the `PATH` of the shell you start `claude` from):
 
 ```bash
-go install gooze.dev/pkg/gooze@latest                # required (v1.3.0+ for --diff, --run, --mutagens and thresholds; v1.2.0 works with fallbacks)
+go install gooze.dev/pkg/gooze@latest                # required (v1.4.1 recommended; v1.3.0+ for --diff, --run, --mutagens and thresholds; v1.2.0 works with fallbacks)
 go install gooze.dev/pkg/goozels/cmd/goozels@latest  # for the post-edit hook (v0.2.0+; v0.3.0 knows gooze v1.3.0)
 ```
 

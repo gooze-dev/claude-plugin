@@ -228,7 +228,7 @@ for i in 0 1 2 3 4 5; do
   taskset -c 0-3 systemd-run --user --scope -p MemoryMax=16G gooze run -p 2 -s $i/6 --diff origin/main ./...
 done
 gooze report merge -o .gooze-reports/run
-gooze report view -o .gooze-reports/run --threshold-total 100
+gooze report view -o .gooze-reports/run --threshold-diff-total 100
 ```
 
 **Run it on the exact commit you will push, and push only when the local

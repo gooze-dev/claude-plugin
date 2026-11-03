@@ -96,16 +96,16 @@ usually small. The cache does not see cross-file test dependencies; a nightly
 ## Install line (all targets)
 
 ```sh
-GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.3.0
+GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.1
 ```
 
 - **Pin a version** in CI so a new gooze release can't change results or
   break the pipeline unannounced; bump it deliberately. `@latest` is fine for
   a quick local try. Which version: if `CLAUDE.md` or `AGENTS.md` has a
   `<!-- gooze:begin guide=N gooze=vX.Y.Z -->` marker (written by `/gooze:init`),
-  pin that `vX.Y.Z` so local, CI and the guide agree; otherwise `v1.3.0`, the
-  current release. Snippets in the reference files say `v1.3.0`; substitute.
-- **`GOTOOLCHAIN=auto`**: gooze v1.3.0 needs Go >= 1.27.3 to build. Official
+  pin that `vX.Y.Z` so local, CI and the guide agree; otherwise `v1.4.1`, the
+  current release. Snippets in the reference files say `v1.4.1`; substitute.
+- **`GOTOOLCHAIN=auto`**: gooze v1.4.1 needs Go >= 1.27.3 to build. Official
   `golang:*` images set `GOTOOLCHAIN=local`, so on an older image the plain
   install fails with "requires go >= 1.27.3". With `auto`, Go fetches the newer
   toolchain just to build gooze; the project's tests still run on its own Go.
@@ -124,15 +124,14 @@ GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.3.0
 `--insecure`). `gooze config init`, `gooze version`.
 `gooze run`, `gooze report view` and `gooze report merge` take
 `--threshold-total`, `--threshold-average` and `--threshold-file`;
-`gooze run` also takes `--threshold-diff-total`, `--threshold-diff-average`
-and `--threshold-diff-file` (see below).
+`gooze run` and `gooze report view` also take `--threshold-diff-total`,
+`--threshold-diff-average` and `--threshold-diff-file` (see below).
 `gooze report view --format text|github|gitlab|sarif|codeclimate` (config
 `report.format`, env `GOOZE_REPORT_FORMAT`) writes survivors as GitHub
 annotations before the summary, or instead of it as a SARIF 2.1.0 log or a
 Code Climate report for GitLab Code Quality (`gitlab` and `codeclimate` are
 the same). Use a format only if the pinned gooze's `gooze report view --help`
-lists it (none are in v1.3.0; `gitlab` and `codeclimate` came after `github`
-and `sarif`).
+lists it (all are in v1.4.0+, none in v1.3.0).
 
 Suggest adding `.gooze-reports/` and `.gooze.log` to an existing `.gitignore`
 and to an existing `clean` target, if not there.
@@ -157,8 +156,11 @@ in `gooze.yaml` or as env vars:
 - **Pull requests with `--diff`**: a `gooze run --diff REF` run checks only
   `--threshold-diff-total|average|file` (`threshold.diff.*`,
   `GOOZE_THRESHOLD_DIFF_TOTAL`, ...), scored on the changed lines, e.g.
-  `gooze run --diff origin/main --threshold-diff-total 80 ./...`. Every other
-  run, `report view` and `report merge` use the plain thresholds.
+  `gooze run --diff origin/main --threshold-diff-total 80 ./...`.
+  `gooze report view -o .gooze-reports/run` of a diff run (v1.4.0+), also
+  after merging its shards (v1.4.1+), checks the diff thresholds too and
+  ignores the plain ones. Every other run, view and merge use the plain
+  thresholds.
 - **Shards** (`-s I/N`, N > 1) never check thresholds. Put them on
   `gooze report merge` or the `gooze report view` after it.
 - Below a threshold gooze still writes the reports and prints the score
