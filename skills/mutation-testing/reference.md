@@ -1,6 +1,6 @@
 # gooze reference
 
-Verified against gooze v1.4.2 (features newer than v1.4.1 are marked v1.4.2+). Full docs: <https://gooze.dev/docs>.
+Verified against gooze v1.5.0 (features newer than v1.4.2 are marked v1.5.0+). Full docs: <https://gooze.dev/docs>.
 
 ## Mutagens
 
@@ -38,13 +38,13 @@ names a release accepts under `--mutagens`.
 | `gooze report view --all [paths...]` | every mutation with its status and diff |
 | `gooze report view --by-line [paths...]` | the survivors once per line of a file, changes folded; with `--format github` it groups the summary after the annotations (v1.4.2+; not with `--all`, `--format sarif` or `--format codeclimate`/`gitlab`, exit 2) |
 | `gooze report merge` | merge sharded reports (`shard_N/`) into one directory; also folds in a narrowed run (`run/`) |
-| `gooze report push <ref>` / `pull <ref>` | store or fetch reports in an OCI registry (CI baselines) |
+| `gooze report push <ref>` / `pull <ref>` | store or fetch reports in an OCI registry (CI baselines); `--oci-compat` (`report.oci.compat`) pushes only widely accepted media types for registries such as GitLab's, on by itself for `registry.gitlab.com` and `report.oci.compat_hosts`, `--oci-compat=false` turns it off (v1.5.0+; `pull` reads both) |
 | `gooze config init` | write a default `gooze.yaml` |
 | `gooze config show` | every config key with its effective value, its source (flag, env, `gooze.yaml` or default) and env var (v1.4.2+) |
 | `gooze config schema` | the JSON Schema of `gooze.yaml`, for editors (v1.4.2+) |
 | `gooze version` | print the version (`gooze --version` too, v1.4.2+) |
 
-Installed as a Go tool (`go get -tool gooze.dev/pkg/gooze@v1.4.2`, which
+Installed as a Go tool (`go get -tool gooze.dev/pkg/gooze@v1.5.0`, which
 adds a `tool` line to `go.mod`), every command runs as `go tool gooze ...`
 at the version `go.mod` pins. That raises the module's `go` line to gooze's
 (1.27.3) and adds its dependencies (about 55) as indirect requires.
@@ -63,6 +63,7 @@ There is no `gooze list` or top-level `gooze view`. <!-- lint-ignore: names comm
 | `--diff REF` | only lines changed since the merge base of `REF` and HEAD (needs git), plus every line of `x.go` when `x_test.go` changed |
 | `--run REGEX` | only functions matching, as for `go test -run` (`Name`, `Type.Name`); not with `--shard` |
 | `--mutagens LIST` | only these mutagens, comma-separated |
+| `--test-flags FLAGS` | extra `go test` flags for every mutant's tests, repeatable or space-separated, values after `=` (e.g. `--test-flags "-short -tags=integration"`; key `run.test_flags`, v1.5.0+) |
 | `--workspace MODE` | how mutants are built: `overlay` (default) or `deep-copy`; see [killing-survivors.md](killing-survivors.md#tests-that-dont-see-the-mutant) |
 
 Releases before v1.3.0 lack `--diff`, `--run` and `--mutagens`, and with them
@@ -148,13 +149,15 @@ a file holding partial results is re-tested in full by the next full run. `run/`
 `run.go_cache_prewarm`, `mutagen.comparison.enum_bounds`, `threshold.total`,
 `threshold.average`, `threshold.file`, `threshold.max_survivors`,
 `threshold.diff.total`, `threshold.diff.average`, `threshold.diff.file`,
-`report.format`, `log.filename`, `log.level`, `log.verbose`, `log.max_size`,
+`run.test_flags`, `report.format`, `report.oci.compat`, `report.oci.compat_hosts`, `log.filename`, `log.level`, `log.verbose`, `log.max_size`,
 `log.max_backups`, `log.max_age` and `log.compress` (`--run` has no key, like
 `go test -run`). Environment variables use the `GOOZE_` prefix (e.g.
 `GOOZE_LOG_MAX_SIZE`, `GOOZE_RUN_MUTAGENS`). `gooze config show` (v1.4.2+)
 lists every key with its effective value, source and env var; `gooze config
 schema` prints the JSON Schema for editors.
 
+- **v1.5.0+**: `run.test_flags` (`--test-flags`), `report.oci.compat` and
+  `report.oci.compat_hosts` (see `report push`), and `report.format: metrics`.
 - **v1.4.2+**: `no_cache` and `no_update_check` replace `no-cache` and
   `no-update-check`, which still work with a deprecation warning; older
   releases call the snake case names unknown. `version` is ignored, with a

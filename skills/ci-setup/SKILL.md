@@ -83,7 +83,9 @@ Suggest the smallest useful change first, then mention the optional upgrades:
    lines) or code scanning with `--format sarif`; see
    [github-actions.md](github-actions.md#survivors-on-the-pull-request-and-in-code-scanning-optional).
    On GitLab, a Code Quality report with `--format gitlab`; see
-   [gitlab-ci.md](gitlab-ci.md#survivors-in-the-merge-request-optional).
+   [gitlab-ci.md](gitlab-ci.md#survivors-in-the-merge-request-optional). The
+   score in the merge request widget with `--format metrics` (v1.5.0+); see
+   [gitlab-ci.md](gitlab-ci.md#score-in-the-merge-request-widget-optional).
 
 Explain the cost honestly: every mutant runs that package's tests, so a full
 `./...` run can take many minutes to hours. Mitigations: scope paths, exclude
@@ -96,22 +98,22 @@ usually small. The cache does not see cross-file test dependencies; a nightly
 ## Install line (all targets)
 
 ```sh
-GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.2
+GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.5.0
 ```
 
 - **Pin a version** in CI so a new gooze release can't change results or
   break the pipeline unannounced; bump it deliberately. `@latest` is fine for
   a quick local try. Which version: if `CLAUDE.md` or `AGENTS.md` has a
   `<!-- gooze:begin guide=N gooze=vX.Y.Z -->` marker (written by `/gooze:init`),
-  pin that `vX.Y.Z` so local, CI and the guide agree; otherwise `v1.4.2`, the
-  current release. Snippets in the reference files say `v1.4.2`; substitute.
+  pin that `vX.Y.Z` so local, CI and the guide agree; otherwise `v1.5.0`, the
+  current release. Snippets in the reference files say `v1.5.0`; substitute.
 - **gooze as a Go tool**: if `go.mod` already has a `tool gooze.dev/pkg/gooze`
   line (or that path in a `tool ( ... )` block), skip the install line and
   call `go tool gooze ...` in every snippet: `go.mod` pins the version, so
   don't add another pin. Don't suggest switching to it unasked: `go get -tool`
   raises the module's `go` line to 1.27.3 and adds about 55 indirect
   requires.
-- **`GOTOOLCHAIN=auto`**: gooze v1.4.2 needs Go >= 1.27.3 to build. Official
+- **`GOTOOLCHAIN=auto`**: gooze v1.5.0 needs Go >= 1.27.3 to build. Official
   `golang:*` images set `GOTOOLCHAIN=local`, so on an older image the plain
   install fails with "requires go >= 1.27.3". With `auto`, Go fetches the newer
   toolchain just to build gooze; the project's tests still run on its own Go.
@@ -137,8 +139,10 @@ take `--threshold-diff-total`, `--threshold-diff-average` and
 `report.format`, env `GOOZE_REPORT_FORMAT`) writes survivors as GitHub
 annotations before the summary, or instead of it as a SARIF 2.1.0 log or a
 Code Climate report for GitLab Code Quality (`gitlab` and `codeclimate` are
-the same). Use a format only if the pinned gooze's `gooze report view --help`
-lists it (all are in v1.4.0+, none in v1.3.0).
+the same). `--format metrics` (v1.5.0+) writes the score and counts as a
+GitLab metrics report instead. Use a format only if the pinned gooze's
+`gooze report view --help` lists it (all but `metrics` are in v1.4.0+, none in
+v1.3.0).
 
 Suggest adding `.gooze-reports/` and `.gooze.log` to an existing `.gitignore`
 and to an existing `clean` target, if not there.

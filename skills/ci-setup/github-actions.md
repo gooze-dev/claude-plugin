@@ -50,7 +50,7 @@ saved on its base branch), run, save under the commit SHA.
         with:
           go-version-file: go.mod        # same as the existing test job
       - name: Install gooze
-        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.2
+        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.5.0
       - name: Restore gooze reports
         uses: actions/cache/restore@v4
         with:
@@ -100,7 +100,7 @@ the `shard_N/` layout exactly (this is what gooze's own CI does).
         with:
           go-version-file: go.mod
       - name: Install gooze
-        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.2
+        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.5.0
       - name: Restore gooze reports
         uses: actions/cache/restore@v4
         with:
@@ -126,7 +126,7 @@ the `shard_N/` layout exactly (this is what gooze's own CI does).
         with:
           go-version-file: go.mod
       - name: Install gooze
-        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.2
+        run: GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.5.0
       # Base reports first, so files no shard re-tested keep their cached results.
       - name: Restore gooze reports
         uses: actions/cache/restore@v4

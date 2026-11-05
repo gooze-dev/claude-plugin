@@ -8,6 +8,7 @@
 - 3. Baseline in the GitLab container registry (optional)
 - Thresholds (optional)
 - Survivors in the merge request (optional)
+- Score in the merge request widget (optional)
 
 Add a job to the **existing** `.gitlab-ci.yml` (or to the included file that
 holds the Go jobs). Copy its conventions: the `image:` (global or per job; reuse
@@ -17,7 +18,7 @@ whose stage isn't listed is an error), `tags:`, `before_script:`, `variables:`
 `workflow:rules` / job `rules:` style.
 
 `GOTOOLCHAIN=auto` matters here: official `golang:*` images set
-`GOTOOLCHAIN=local`, and gooze v1.4.2 needs Go >= 1.27.3 to build. If the repo
+`GOTOOLCHAIN=local`, and gooze v1.5.0 needs Go >= 1.27.3 to build. If the repo
 relocates `GOPATH`, `gooze` lands in `$GOPATH/bin`; call it by that path (or
 add it to `PATH`) unless that dir is already on `PATH`.
 
@@ -51,7 +52,7 @@ mutation:
       paths:
         - .gooze-reports/
   script:
-    - GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.2
+    - GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.5.0
     - gooze run -p 4 ./...
     - gooze report view
   artifacts:
@@ -83,7 +84,7 @@ mutation:
       paths: [.gooze-reports/]
       policy: pull               # shards only read; the merge job writes
   script:
-    - GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.2
+    - GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.5.0
     - gooze run -p 2 -s "$((CI_NODE_INDEX - 1))/$CI_NODE_TOTAL" ./...
   artifacts:
     paths:
@@ -97,7 +98,7 @@ mutation-merge:
       fallback_keys: [gooze-$CI_DEFAULT_BRANCH]
       paths: [.gooze-reports/]
   script:
-    - GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.4.2
+    - GOTOOLCHAIN=auto go install gooze.dev/pkg/gooze@v1.5.0
     - gooze report merge
     - gooze report view
   artifacts:
@@ -134,6 +135,13 @@ After the run/merge, default branch only:
 Put these variables on the mutation jobs if the global `variables:` would leak
 the token setting into unrelated jobs. The registry must be enabled for the
 project.
+
+GitLab's registry accepts only allowlisted media types. gooze v1.5.0+ pushes
+compatible ones by itself to `registry.gitlab.com`; for a self-managed GitLab,
+add its registry host to `report.oci.compat_hosts` (comma-separated, env
+`GOOZE_REPORT_OCI_COMPAT_HOSTS`) or pass `--oci-compat`. Older releases fail
+the push with `unknown media type`: offer the bump. `gooze report pull` reads
+both formats.
 
 ## Thresholds (optional)
 
@@ -202,3 +210,31 @@ line always runs, and gate there:
   `gooze report view` would print JSON too.
 - When the diff run is sharded, write the report from the merged gate:
   `gooze report view -o .gooze-reports/run --format gitlab --threshold-diff-total 100 > gl-code-quality-report.json`.
+
+## Score in the merge request widget (optional)
+
+`gooze report view --format metrics` (v1.5.0+) writes the score and counts as
+a GitLab metrics report, which the merge request widget compares with the
+target branch:
+
+```
+gooze_mutation_score_percent 85.29
+gooze_mutants_total 4950
+gooze_mutants_killed 4005
+gooze_mutants_survived 689
+...
+# EOF
+```
+
+The metrics of a `--diff` run's reports are named `gooze_diff_*`. Add a line
+after the run (or merge) and the report to the job's `artifacts:`:
+
+```yaml
+    - gooze report view --format metrics > metrics.txt
+  artifacts:
+    reports:
+      metrics: metrics.txt
+```
+
+Use it only if the pinned gooze's `gooze report view --help` lists `metrics`
+under `--format`. Metrics reports need GitLab Premium.

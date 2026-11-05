@@ -43,7 +43,7 @@ complexity. Check both before a run and tell the user what you find.
    it's missing: `go install gooze.dev/pkg/gooze@latest`. For diagnostics after each edit, the
    `goozels` binary is optional: `go install gooze.dev/pkg/goozels/cmd/goozels@latest`.
    **Keep them up to date.** gooze and goozels print a line like
-   `gooze v1.4.2 is available (you have v1.3.0). Update: go install …@latest`
+   `gooze v1.5.0 is available (you have v1.3.0). Update: go install …@latest`
    on stderr, and the session check reports the same at startup. When you see
    one, tell the user and offer that command, but run it only if they agree:
    it changes their installed tools. After a gooze update, offer `/gooze:init`
