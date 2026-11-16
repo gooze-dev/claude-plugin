@@ -38,7 +38,11 @@ they are deprecated, and offer to rename them `no_cache` and
 `no_update_check` (older gooze calls the new names unknown) and to drop a
 `version:` line, which v1.4.2+ ignores. If there is no file, offer
 `gooze config init`: it writes `./gooze.yaml` with every key at its default,
-each with a comment, and refuses to overwrite an existing file. It ignores
+each with a comment, and refuses to overwrite an existing file. In v1.6.1+ it
+writes `run.mutation_memory: 1024` and `run.mutation_disk: 1024` (MiB) instead
+of their default, no limit; if the file exists and gooze is v1.6.1+, offer to
+add these two keys under `run:`, so a mutant that allocates or writes without
+end is killed before it takes the machine down. It ignores
 flags such as `-x`, so to exclude directories the repo actually has (mocks,
 generated code), offer to set `paths.exclude` in the written file afterwards,
 e.g. `exclude: ['mocks/', '_gen\.go$']`.

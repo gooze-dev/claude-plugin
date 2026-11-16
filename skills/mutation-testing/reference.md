@@ -1,6 +1,6 @@
 # gooze reference
 
-Verified against gooze v1.5.0 (features newer than v1.4.2 are marked v1.5.0+). Full docs: <https://gooze.dev/docs>.
+Verified against gooze v1.6.1 (features newer than v1.4.2 are marked with their release). Full docs: <https://gooze.dev/docs>.
 
 ## Mutagens
 
@@ -44,7 +44,7 @@ names a release accepts under `--mutagens`.
 | `gooze config schema` | the JSON Schema of `gooze.yaml`, for editors (v1.4.2+) |
 | `gooze version` | print the version (`gooze --version` too, v1.4.2+) |
 
-Installed as a Go tool (`go get -tool gooze.dev/pkg/gooze@v1.5.0`, which
+Installed as a Go tool (`go get -tool gooze.dev/pkg/gooze@v1.6.1`, which
 adds a `tool` line to `go.mod`), every command runs as `go tool gooze ...`
 at the version `go.mod` pins. That raises the module's `go` line to gooze's
 (1.27.3) and adds its dependencies (about 55) as indirect requires.
@@ -59,6 +59,8 @@ There is no `gooze list` or top-level `gooze view`. <!-- lint-ignore: names comm
 | `-s, --shard I/N` | run shard `I` of `N` (e.g. `0/4`), for CI |
 | `--estimate` | preview only |
 | `--mutation-timeout SEC` | per-mutation test timeout (default 120) |
+| `--mutation-memory MIB` | memory the tests of one mutant may hold, all their processes together; over it they are killed and the mutant is `timeout` (`0`, the default, is no limit; Linux only; key `run.mutation_memory`, v1.6.1+) |
+| `--mutation-disk MIB` | disk space the tests of one mutant may take in their temp and build directories; over it they are killed and the mutant is `timeout` (`0`, the default, is no limit; key `run.mutation_disk`, v1.6.1+) |
 | `--coverage-profile FILE` | Go coverage profile; mutations on uncovered lines become `not_covered` without running tests |
 | `--diff REF` | only lines changed since the merge base of `REF` and HEAD (needs git), plus every line of `x.go` when `x_test.go` changed |
 | `--run REGEX` | only functions matching, as for `go test -run` (`Name`, `Type.Name`); not with `--shard` |
@@ -144,11 +146,12 @@ a file holding partial results is re-tested in full by the next full run. `run/`
 ## gooze.yaml keys
 
 `output`, `no_cache`, `no_update_check`, `paths.exclude`, `run.parallel`,
-`run.mutation_timeout`, `run.coverage_profile`, `run.diff`, `run.mutagens`,
+`run.mutation_timeout`, `run.mutation_memory`, `run.mutation_disk`, `run.coverage_profile`, `run.diff`, `run.mutagens`,
 `run.workspace`, `run.fail_fast`, `run.go_cache`, `run.go_cache_size`,
 `run.go_cache_prewarm`, `mutagen.comparison.enum_bounds`, `threshold.total`,
 `threshold.average`, `threshold.file`, `threshold.max_survivors`,
 `threshold.diff.total`, `threshold.diff.average`, `threshold.diff.file`,
+`threshold.diff.max_survivors`, `threshold.timeouts`, `report.gate`,
 `run.test_flags`, `report.format`, `report.oci.compat`, `report.oci.compat_hosts`, `log.filename`, `log.level`, `log.verbose`, `log.max_size`,
 `log.max_backups`, `log.max_age` and `log.compress` (`--run` has no key, like
 `go test -run`). Environment variables use the `GOOZE_` prefix (e.g.
@@ -156,6 +159,26 @@ a file holding partial results is re-tested in full by the next full run. `run/`
 lists every key with its effective value, source and env var; `gooze config
 schema` prints the JSON Schema for editors.
 
+- **v1.6.1+**: `run.mutation_memory` and `run.mutation_disk` (MiB, `0` = no
+  limit, the default) kill the tests of a mutant that take too much memory
+  (Linux only) or disk space. Each limit is for one mutant, so `run.parallel`
+  test runs may each use it. `gooze config init` writes `1024` for both; an
+  existing `gooze.yaml` has no limit until the keys are added. If a package's
+  tests go over a limit without any mutation, its mutants aren't tested (exit
+  code 7): raise the limit. gooze also keeps only the first and last 1 MiB of
+  a mutant's test output, gives every `go test` its own `TMPDIR`, and on Linux
+  kills the processes a test leaves running in its process group.
+- **v1.6.0+**: `threshold.timeouts: killed` counts timed-out mutants as killed
+  in the score and every gate (default `survived`).
+  `threshold.diff.max_survivors` caps the survivors on the changed lines.
+  `gooze report merge --scope diff,total` merges `--diff` shards, shows the
+  changed lines and the whole project in one step, and `report.gate`
+  (`--gate auto|diff|total|none`) picks the scope that can fail the job.
+  `report merge` prints the report like `report view` instead of the run's
+  progress view, and both take a repeatable `--write <format>=<path>`.
+- **v1.5.1+**: `gooze report view --summary` and `--top N` for short CI logs;
+  `gooze report pull` replaces the stored reports; exit code 2 without `go` on
+  `PATH`.
 - **v1.5.0+**: `run.test_flags` (`--test-flags`), `report.oci.compat` and
   `report.oci.compat_hosts` (see `report push`), and `report.format: metrics`.
 - **v1.4.2+**: `no_cache` and `no_update_check` replace `no-cache` and

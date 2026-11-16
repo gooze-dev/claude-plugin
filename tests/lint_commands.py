@@ -23,15 +23,22 @@ KNOWN = {
     "run": {"-p", "--parallel", "-s", "--shard", "--estimate", "--mutation-timeout", "--coverage-profile", "--diff", "--run", "--mutagens", "--workspace",
             "--threshold-total", "--threshold-average", "--threshold-file",
             "--threshold-diff-total", "--threshold-diff-average", "--threshold-diff-file",
-            "--threshold-max-survivors", "--fail-fast"},
+            "--threshold-max-survivors", "--fail-fast",
+            # v1.5.0, v1.6.0 and v1.6.1.
+            "--test-flags", "--threshold-diff-max-survivors", "--threshold-timeouts", "--mutation-memory", "--mutation-disk"},
     # --format and --threshold-diff-* come after v1.3.0, --by-line after v1.4.1;
     # the skills check `--help` first.
     "report view": {"--all", "--by-line", "--format", "--threshold-total", "--threshold-average", "--threshold-file",
                     "--threshold-diff-total", "--threshold-diff-average", "--threshold-diff-file",
-                    "--threshold-max-survivors"},
+                    "--threshold-max-survivors",
+                    # v1.5.1 and v1.6.0.
+                    "--summary", "--top", "--write", "--gate", "--threshold-diff-max-survivors", "--threshold-timeouts"},
     # merge takes --threshold-diff-* after v1.4.1.
     "report merge": {"--threshold-total", "--threshold-average", "--threshold-file", "--threshold-max-survivors",
-                     "--threshold-diff-total", "--threshold-diff-average", "--threshold-diff-file"},
+                     "--threshold-diff-total", "--threshold-diff-average", "--threshold-diff-file",
+                     # v1.6.0: merge prints the report, as view does.
+                     "--by-line", "--format", "--summary", "--top", "--write", "--write-diff", "--scope", "--gate",
+                     "--threshold-diff-max-survivors", "--threshold-timeouts"},
     "report push": {"--plain-http", "--insecure"},
     "report pull": {"--plain-http", "--insecure"},
     "report": set(),
