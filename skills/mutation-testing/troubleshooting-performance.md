@@ -119,15 +119,23 @@ says how to check it helped before you suggest it.
 ## Timeouts
 
 A mutant ends as `timeout` when its tests run past `--mutation-timeout`
-(`run.mutation_timeout`, default 120 seconds). It is one of two things:
+(`run.mutation_timeout`, default 120 seconds), or, in v1.6.1+, when they go
+over `run.mutation_memory` or `run.mutation_disk` and gooze kills them. It is
+one of three things:
 
 - **An infinite loop**: the mutant changed a loop condition so the loop never
   ends. Raising the timeout never helps; don't suggest it.
 - **A slow but finishing test**: raising the timeout helps, but the test is
   worth speeding up anyway (see [Slow tests](#slow-tests)).
+- **A mutant over a memory or disk limit** (v1.6.1+): the mutant allocates or
+  writes without end, and gooze stopped it before the timeout. It is most
+  often an infinite loop that was caught early, and raising the limit doesn't
+  help then. The limit is too low when the tests need more than it without
+  any mutation: gooze then exits 7 and names the setting.
 
 A timeout counts as not killed in the score, so it fails a `threshold.*: 100`
-gate even though the tests did notice the mutant.
+gate even though the tests did notice the mutant. With `threshold.timeouts:
+killed` (v1.6.0+) it counts as killed in the score and every gate.
 
 **Tell them apart by applying the mutant through an overlay.** Take the
 original and mutated line from `gooze report view` (or `gooze report view
